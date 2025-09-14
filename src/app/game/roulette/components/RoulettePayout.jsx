@@ -1,7 +1,6 @@
 "use client";
 import React from 'react';
-import { Box, Typography, Paper, Chip, Divider } from '@mui/material';
-import Grid from "@mui/material/Unstable_Grid2";
+import { Box, Typography, Paper, Chip, Divider, Grid } from '@mui/material';
 import { FaCoins, FaExclamationTriangle } from 'react-icons/fa';
 
 const payoutData = [

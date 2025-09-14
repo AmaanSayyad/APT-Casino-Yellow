@@ -1,8 +1,7 @@
 "use client";
 import React, { useState } from 'react';
-import { Box, Typography, Paper, Button, Tooltip, Stack, Fade } from '@mui/material';
+import { Box, Typography, Paper, Button, Tooltip, Stack, Fade, Grid } from '@mui/material';
 import { FaChartPie, FaInfoCircle, FaThumbsUp, FaDice, FaQuestion, FaChevronRight } from 'react-icons/fa';
-import Grid from "@mui/material/Unstable_Grid2";
 
 const probabilityData = [
   {

@@ -6,7 +6,7 @@ import { ThemeProvider, styled, createTheme } from "@mui/material/styles";
 import InfoIcon from "@mui/icons-material/Info";
 import ClearIcon from "@mui/icons-material/Clear";
 import UndoIcon from "@mui/icons-material/Undo";
-import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
+import { Grid } from "@mui/material"; // Updated Grid import
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
 import currency from "currency.js";
 import TextFieldCurrency from "@/components/TextFieldCurrency";
