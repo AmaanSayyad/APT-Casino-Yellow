@@ -4,7 +4,7 @@ require("dotenv").config({ path: '.env.local' });
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.19",
+    version: "0.8.20",
     settings: {
       optimizer: {
         enabled: true,
@@ -15,9 +15,18 @@ module.exports = {
   networks: {
     'arbitrum-sepolia': {
       url: process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC || "https://sepolia-rollup.arbitrum.io/rpc",
-      accounts: ["0x080c0b0dc7aa27545fab73d29b06f33e686d1491aef785bf5ced325a32c14506"],
+      accounts: process.env.TREASURY_PRIVATE_KEY ? [process.env.TREASURY_PRIVATE_KEY] : [],
       chainId: 421614,
       timeout: 120000, // 2 minutes
+      httpHeaders: {
+        "User-Agent": "hardhat"
+      }
+    },
+    'yellow-canary': {
+      url: process.env.YELLOW_CANARY_RPC || "https://rpc.canary.yellow.org",
+      accounts: process.env.TREASURY_PRIVATE_KEY ? [process.env.TREASURY_PRIVATE_KEY] : [],
+      chainId: 5001, // Yellow Canary testnet chain ID
+      timeout: 120000,
       httpHeaders: {
         "User-Agent": "hardhat"
       }

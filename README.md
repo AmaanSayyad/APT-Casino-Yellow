@@ -1,11 +1,18 @@
-# APT Casino: Decentralized Gaming with Yellow Network Layer-3 State Channels
+# APT Casino: Arbitrum Sepolia Casino with Yellow Network State Channels
 
 [![Yellow Network](https://img.shields.io/badge/Powered%20by-Yellow%20Network-yellow)](https://yellow.org)
 [![ERC-7824](https://img.shields.io/badge/Standard-ERC--7824-blue)](https://erc7824.org)
+[![Arbitrum Sepolia](https://img.shields.io/badge/Settlement-Arbitrum%20Sepolia-blue)](https://sepolia.arbiscan.io)
+[![Clearnode](https://img.shields.io/badge/State%20Channels-Yellow%20Clearnode-yellow)](https://docs.yellow.org)
 
 ## Abstract
 
-APT Casino represents a paradigm shift in decentralized gaming applications by leveraging Yellow Network's Layer-3 state channel technology (ERC-7824) to deliver a gasless, high-throughput gaming experience without sacrificing blockchain security guarantees. This implementation demonstrates how complex, high-frequency interactions can be moved off-chain while maintaining cryptographic verifiability and on-chain settlement capabilities.
+APT Casino is a decentralized gaming platform that runs on **Arbitrum Sepolia** for final settlement while using **Yellow Network's Clearnode Testnet** for gasless, instant gaming through ERC-7824 state channels. This hybrid architecture provides:
+
+- **Settlement Layer**: Arbitrum Sepolia (low-cost L2)
+- **Gaming Layer**: Yellow Network state channels (gasless, instant)
+- **Randomness**: Yellow Network VRF (provably fair)
+- **SDK**: ERC-7824 Nitrolite for state channel management
 
 ## Technical Architecture
 

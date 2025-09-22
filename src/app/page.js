@@ -10,6 +10,7 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 import UpcomingTournaments from "@/components/UpcomingTournaments";
 import NewsUpdates from "@/components/NewsUpdates";
 import ProvablyFairSection from "@/components/ProvablyFairSection";
+import YellowNetworkStatus from "@/components/YellowNetworkStatus";
 
 export default function Home() {
   return (
@@ -24,6 +25,7 @@ export default function Home() {
       <NewsUpdates />
       <ProvablyFairSection />
       <LetsPlaySection />
+      <YellowNetworkStatus />
     </div>
   );
 }

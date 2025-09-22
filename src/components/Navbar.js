@@ -10,8 +10,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setBalance, setLoading, loadBalanceFromStorage } from '@/store/balanceSlice';
 import EthereumConnectWalletButton from "./EthereumConnectWalletButton";
 import WithdrawModal from "./WithdrawModal";
-import VRFPregenerationModal from "./VRF/VRFPregenerationModal";
-import { useVRFPregeneration } from '../hooks/useVRFPregeneration';
+// VRF Pregeneration removed - using Yellow Network SDK
 import { useGlobalWalletPersistence } from '../hooks/useGlobalWalletPersistence';
 
 
@@ -122,10 +121,7 @@ export default function Navbar() {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
   const [isDepositing, setIsDepositing] = useState(false);
-  const [showVRFModal, setShowVRFModal] = useState(false);
-
-  // VRF Pregeneration
-  const { vrfStatus, generateVRFBatch, isGenerating, showModal, openModal, closeModal } = useVRFPregeneration();
+  // VRF removed - using Yellow Network SDK
 
 
   // Wallet connection with persistence
@@ -637,29 +633,7 @@ export default function Navbar() {
     setSearchQuery('');
   };
 
-  // VRF Functions
-  const handleVRFButtonClick = () => {
-    if (isConnected && address) {
-      console.log('🎲 VRF button clicked in Navbar.js');
-      console.log('Current showModal state:', showModal);
-      console.log('Current vrfStatus:', vrfStatus);
-      openModal();
-      console.log('After openModal() call, showModal should be true');
-    } else {
-      console.log('❌ VRF button clicked but wallet not connected or no address');
-      console.log('isConnected:', isConnected, 'address:', address);
-    }
-  };
-
-  const handleVRFModalClose = () => {
-    closeModal();
-  };
-
-  const handleGenerateVRF = async () => {
-    if (address) {
-      await generateVRFBatch(address);
-    }
-  };
+  // VRF functions removed - Yellow Network SDK handles randomness
 
   // Detect Ethereum wallet network (best-effort)
   useEffect(() => {
@@ -991,17 +965,14 @@ export default function Navbar() {
               </div>
             )}
             
-            {/* VRF Proof Button */}
+            {/* Yellow Network SDK Status */}
             {isConnected && (
-              <button
-                onClick={handleVRFButtonClick}
-                className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105 flex items-center gap-2"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <div className="px-3 py-2 bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border border-yellow-500/30 text-yellow-300 font-medium rounded-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                 </svg>
-                VRF Proof
-              </button>
+                Yellow SDK
+              </div>
             )}
             
             {/* Ethereum Wallet Button */}
@@ -1231,11 +1202,7 @@ export default function Navbar() {
         <div className="w-full h-[2px] magic-gradient overflow-hidden"></div>
       </nav>
       
-      {/* VRF Modal - Moved outside nav for proper positioning */}
-      <VRFPregenerationModal
-        open={showModal}
-        onClose={handleVRFModalClose}
-      />
+      {/* VRF Modal removed - Yellow Network SDK handles randomness */}
       
     </>
   );

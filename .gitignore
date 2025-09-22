@@ -2,9 +2,10 @@
 /node_modules
 /.pnp
 .pnp.js
-
+.env.example
 # testing
 /coverage
+artifacts
 
 # next.js
 /.next/

@@ -24,9 +24,8 @@ import "./mines.css";
 import GameDetail from "@/components/GameDetail";
 import AIAutoBetting from "./components/AIAutoBetting";
 import AISettingsModal from "./components/AISettingsModal";
-import vrfProofService from '@/services/VRFProofService';
-import VRFProofRequiredModal from '@/components/VRF/VRFProofRequiredModal';
-import vrfLogger from '@/services/VRFLoggingService';
+import yellowNetworkService from '@/services/YellowNetworkService';
+import YellowNetworkModal from '@/components/YellowNetwork/YellowNetworkModal';
 
 export default function Mines() {
   // Game State
@@ -41,7 +40,7 @@ export default function Mines() {
   // AI Auto Betting State
   const [isAIActive, setIsAIActive] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
-  const [showVRFModal, setShowVRFModal] = useState(false);
+  const [showYellowModal, setShowYellowModal] = useState(false);
   const [aiSettings, setAISettings] = useState({
     strategy: 'balanced',
     maxBet: 1,
@@ -112,34 +111,47 @@ export default function Mines() {
   };
   
   // Handle form submission
-  const handleFormSubmit = (formData) => {
-    // Initialize game session logging
-    vrfLogger.initializeGameSession('MINES', 'standard');
-    
-    // Check if VRF proofs are available for this game
+  const handleFormSubmit = async (formData) => {
     try {
-      const vrfStats = vrfProofService.getProofStats();
-      const availableProofs = vrfStats.availableVRFs.MINES || 0;
+      console.log('🟡 YELLOW NETWORK: Initializing Mines game session...');
+      console.log('🔗 Network: Arbitrum Sepolia | Token: ETH | Protocol: ERC-7824');
       
-      if (availableProofs <= 0) {
-        setShowVRFModal(true);
-        return;
+      // Initialize Yellow Network if not connected
+      if (!yellowNetworkService.isConnected) {
+        console.log('🟡 YELLOW NETWORK: Connecting to Clearnode testnet...');
+        await yellowNetworkService.initialize();
+        
+        // Connect with real credentials from environment
+        const channelId = process.env.YELLOW_CHANNEL_ID;
+        const accessToken = process.env.YELLOW_ACCESS_TOKEN;
+        
+        if (!channelId || !accessToken) {
+          throw new Error('Yellow Network credentials not found. Please set YELLOW_CHANNEL_ID and YELLOW_ACCESS_TOKEN in .env.local');
+        }
+        
+        await yellowNetworkService.connect(channelId, accessToken);
+        console.log('✅ YELLOW NETWORK: Real connection established');
       }
       
-      console.log(`✅ Mines game allowed: ${availableProofs} VRF proofs available`);
+      // Set Arbitrum Sepolia testnet
+      yellowNetworkService.setTestnet('arbitrum-sepolia');
+      yellowNetworkService.setToken('ETH');
       
-      // Log VRF request with game parameters
-      vrfLogger.logVRFRequest('MINES', 'standard', formData.betAmount || '0.0', {
-        mines: formData.mines || 0,
-        tilesToReveal: formData.tilesToReveal || 0,
+      // Create game session
+      await yellowNetworkService.createGameSession('MINES', {
+        mines: formData.mines || 3,
+        betAmount: formData.betAmount || '0.01',
+        tilesToReveal: formData.tilesToReveal || 3,
         isAutoBetting: formData.isAutoBetting || false
       });
       
+      console.log('✅ YELLOW NETWORK: Mines game session created successfully');
+      console.log(`🎮 Game Config: ${formData.mines || 3} mines | ${formData.betAmount || '0.01'} ETH bet`);
+      
     } catch (error) {
-      console.error('❌ Error checking VRF proof availability:', error);
-      vrfLogger.logError(error, 'VRF proof availability check');
-      alert('❌ Error checking VRF proof availability. Please try again.');
-      return;
+      console.error('❌ YELLOW NETWORK: Connection failed:', error);
+      console.warn('⚠️  Falling back to demo mode without Yellow Network');
+      alert('❌ Yellow Network connection failed. Running in demo mode.');
     }
     
     console.log('Form submitted with data:', formData);
@@ -203,19 +215,28 @@ export default function Mines() {
   ], [gameStatus]);
 
   // Handle game completion (only when game ends - cashout or mine hit)
-  const handleGameComplete = (result) => {
-    // Consume VRF proof for this game
+  const handleGameComplete = async (result) => {
     try {
-      const vrfResult = vrfProofService.generateRandomFromProof('MINES');
-      console.log('🎲 Mines game completed, VRF proof consumed:', vrfResult);
+      console.log('🟡 YELLOW NETWORK: Processing game completion...');
       
-      // Log game outcome calculation
-      vrfLogger.logGameOutcome('MINES', vrfResult, result, {
-        mines: result.mines || 0,
-        tilesRevealed: result.tilesRevealed || 0,
-        betAmount: result.betAmount || '0.0',
-        calculationMethod: 'VRF-based randomness'
+      // Generate random number using Yellow Network SDK
+      const yellowResult = await yellowNetworkService.generateRandom({
+        purpose: 'game_completion',
+        gameType: 'MINES'
       });
+      console.log(`🟡 YELLOW SDK: Final randomness generated | Value: ${yellowResult.randomNumber} | Session: ${yellowResult.sessionId?.substring(0, 8)}...`);
+      
+      // Settle bet using Yellow Network
+      if (yellowNetworkService.sessionId) {
+        console.log('🟡 YELLOW NETWORK: Settling bet via state channels...');
+        await yellowNetworkService.settleBet(`mines_${Date.now()}`, {
+          won: result.won,
+          payout: result.payout || '0',
+          multiplier: result.multiplier || '0',
+          randomness: yellowResult.randomNumber
+        });
+        console.log('✅ YELLOW NETWORK: Bet settled successfully (gasless)');
+      }
       
       const newHistoryItem = {
         id: Date.now(),
@@ -225,27 +246,26 @@ export default function Mines() {
         payout: result.won ? `${result.payout || '0.00000'} ETH` : '0.00000 ETH',
         multiplier: result.won ? `${result.multiplier || '0.00'}x` : '0.00x',
         time: 'Just now',
-        vrfProof: {
-          proofId: vrfResult.proofId,
-          transactionHash: vrfResult.transactionHash,
-          logIndex: vrfResult.logIndex,
-          requestId: vrfResult.requestId,
-          randomNumber: vrfResult.randomNumber
+        yellowProof: {
+          sessionId: yellowResult.sessionId,
+          randomValue: yellowResult.randomValue,
+          randomNumber: yellowResult.randomNumber,
+          timestamp: yellowResult.timestamp,
+          source: 'Yellow Network SDK'
         }
       };
       
       setGameHistory(prev => [newHistoryItem, ...prev].slice(0, 50));
       
-      // Log proof consumption and session summary
-      const stats = vrfProofService.getProofStats();
-      console.log(`📊 VRF Proof Stats after Mines game:`, stats);
-      vrfLogger.logGameSessionSummary();
+      // Log Yellow Network SDK stats
+      console.log('📊 YELLOW SDK: Game completed successfully');
+      console.log(`🎲 Session: ${yellowResult.sessionId?.substring(0, 8)}... | Random: ${yellowResult.randomNumber}`);
       
     } catch (error) {
-      console.error('❌ Error consuming VRF proof for Mines game:', error);
-      vrfLogger.logError(error, 'VRF proof consumption for Mines game');
+      console.error('❌ YELLOW NETWORK: Game completion processing failed:', error);
+      console.warn('⚠️  Using fallback game completion without Yellow Network');
       
-      // Still add the history item even if VRF proof consumption fails
+      // Still add the history item even if Yellow Network processing fails
       const newHistoryItem = {
         id: Date.now(),
         mines: result.mines || 0,
@@ -253,7 +273,8 @@ export default function Mines() {
         outcome: result.won ? 'win' : 'loss',
         payout: result.won ? `${result.payout || '0.00000'} ETH` : '0.00000 ETH',
         multiplier: result.won ? `${result.multiplier || '0.00'}x` : '0.00x',
-        time: 'Just now'
+        time: 'Just now',
+        source: 'Local fallback'
       };
       
       setGameHistory(prev => [newHistoryItem, ...prev].slice(0, 50));

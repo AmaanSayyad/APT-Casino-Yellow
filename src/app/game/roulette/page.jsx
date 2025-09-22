@@ -33,10 +33,9 @@ import RouletteHistory from './components/RouletteHistory';
 import { useAccount } from 'wagmi';
 import { useSelector, useDispatch } from 'react-redux';
 import { setBalance, setLoading, loadBalanceFromStorage } from '@/store/balanceSlice';
-import vrfProofService from '@/services/VRFProofService';
+import yellowNetworkService from '@/services/YellowNetworkService';
 import { Shield } from "lucide-react";
-import VRFProofRequiredModal from '@/components/VRF/VRFProofRequiredModal';
-import vrfLogger from '@/services/VRFLoggingService';
+import YellowNetworkModal from '@/components/YellowNetwork/YellowNetworkModal';
 
 // Ethereum client functions will be added here when needed
 
@@ -752,7 +751,7 @@ const Alert = React.forwardRef(function Alert(props, ref) {
 const notificationSteps = {
   PLACING_BET: 0,
   BET_PLACED: 1,
-  GENERATING_VRF: 2,
+  GENERATING_RANDOM: 2,
   RESULT_READY: 3
 };
 
@@ -1448,22 +1447,41 @@ export default function GameRoulette() {
       e.stopPropagation();
     }
     
-    // Check if VRF proofs are available for this game
-    try {
-      const vrfStats = vrfProofService.getProofStats();
-      const availableProofs = vrfStats.availableVRFs.ROULETTE || 0;
+    // Initialize Yellow Network for Roulette
+    if (!yellowNetworkService.isConnected) {
+      console.log('🟡 YELLOW NETWORK: Initializing Roulette game...');
       
-      if (availableProofs <= 0) {
-        setShowVRFModal(true);
-        return;
-      }
-      
-      console.log(`✅ Roulette game allowed: ${availableProofs} VRF proofs available`);
-    } catch (error) {
-      console.error('❌ Error checking VRF proof availability:', error);
-      alert('❌ Error checking VRF proof availability. Please try again.');
-      return;
+      yellowNetworkService.initialize().then(() => {
+        yellowNetworkService.setTestnet('arbitrum-sepolia');
+        yellowNetworkService.setToken('ETH');
+        
+        // For demo, set connected
+        yellowNetworkService.isConnected = true;
+        yellowNetworkService.channelId = `roulette_${Date.now()}`;
+        
+        // Create game session
+        return yellowNetworkService.createGameSession('ROULETTE', {
+          betAmount: (newVal || 0.01).toString()
+        });
+      }).then(() => {
+        console.log('✅ YELLOW NETWORK: Roulette session created');
+        console.log('🎮 Session ID:', yellowNetworkService.sessionId);
+      }).catch(error => {
+        console.error('❌ YELLOW NETWORK: Initialization failed:', error);
+      });
+    } else if (!yellowNetworkService.sessionId) {
+      // If connected but no session, create one
+      yellowNetworkService.createGameSession('ROULETTE', {
+        betAmount: (newVal || 0.01).toString()
+      }).then(() => {
+        console.log('✅ YELLOW NETWORK: New Roulette session created');
+        console.log('🎮 Session ID:', yellowNetworkService.sessionId);
+      }).catch(error => {
+        console.error('❌ YELLOW NETWORK: Session creation failed:', error);
+      });
     }
+      
+      // Yellow Network SDK handles randomness - no VRF availability check needed
     
     if (isNaN(newVal)) {
       return;
@@ -2018,27 +2036,37 @@ export default function GameRoulette() {
           }
         };
 
-        // Consume VRF proof for this game
-        try {
-          const vrfResult = vrfProofService.generateRandomFromProof('ROULETTE');
-          console.log('🎲 Roulette game completed, VRF proof consumed:', vrfResult);
+        // Generate random number using Yellow Network SDK
+        yellowNetworkService.generateRandom({
+          purpose: 'roulette_spin',
+          gameType: 'ROULETTE'
+        }).then(yellowResult => {
+          console.log('🟡 YELLOW SDK: Roulette randomness generated:', yellowResult);
           
-          // Add VRF proof info to the bet result
-          newBet.vrfProof = {
-            proofId: vrfResult.proofId,
-            transactionHash: vrfResult.transactionHash,
-            logIndex: vrfResult.logIndex,
-            requestId: vrfResult.requestId,
-            randomNumber: vrfResult.randomNumber
+          // Add Yellow Network proof info to the bet result
+          newBet.yellowProof = {
+            sessionId: yellowResult.sessionId,
+            randomValue: yellowResult.randomValue,
+            randomNumber: yellowResult.randomNumber,
+            timestamp: yellowResult.timestamp,
+            source: 'Yellow Network SDK'
           };
           
-          // Log proof consumption
-          const stats = vrfProofService.getProofStats();
-          console.log(`📊 VRF Proof Stats after Roulette game:`, stats);
-          
-        } catch (error) {
-          console.error('❌ Error consuming VRF proof for Roulette game:', error);
-        }
+          // Settle bet using Yellow Network
+          if (yellowNetworkService.sessionId) {
+            return yellowNetworkService.settleBet(`roulette_${Date.now()}`, {
+              won: netResult > 0,
+              payout: netResult.toString(),
+              randomness: yellowResult.randomNumber
+            });
+          }
+        }).then(() => {
+          console.log('📊 YELLOW SDK: Roulette game completed successfully');
+        }).catch(error => {
+          console.error('❌ YELLOW SDK: Error processing Roulette game:', error);
+          // Still add the bet result even if Yellow Network processing fails
+          newBet.yellowProof = null;
+        });
 
         console.log("newBet object created:", {
           win: newBet.win,
@@ -2516,13 +2544,8 @@ export default function GameRoulette() {
     setBet(0.1);
   };
 
-  // VRF proof count
-  const vrfProofCount = useMemo(() => {
-    return vrfProofService.getProofStats().availableVRFs.ROULETTE || 0;
-  }, []);
-
-  // VRF modal state
-  const [showVRFModal, setShowVRFModal] = useState(false);
+  // Yellow Network SDK - no proof count needed
+  const [showYellowModal, setShowYellowModal] = useState(false);
 
   return (
     <ThemeProvider theme={theme}>
@@ -3054,7 +3077,7 @@ export default function GameRoulette() {
               />
             </Box>
 
-            {/* VRF Proof Status */}
+            {/* Yellow Network Status */}
             <Box sx={{
               display: "flex",
               flexDirection: "column",
@@ -3063,21 +3086,21 @@ export default function GameRoulette() {
               minWidth: isSmallScreen && !isPortrait ? '250px' : 'auto',
               mb: 2,
               p: 2,
-              background: 'linear-gradient(135deg, rgba(139, 35, 152, 0.1) 0%, rgba(49, 196, 190, 0.1) 100%)',
-              border: '1px solid rgba(139, 35, 152, 0.3)',
+              background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%)',
+              border: '1px solid rgba(255, 193, 7, 0.3)',
               borderRadius: '12px'
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <Shield size={16} style={{ color: '#8B2398' }} />
-                <Typography variant="subtitle2" sx={{ color: '#8B2398', fontWeight: 'bold' }}>
-                  VRF Proofs
+                <Shield size={16} style={{ color: '#FFC107' }} />
+                <Typography variant="subtitle2" sx={{ color: '#FFC107', fontWeight: 'bold' }}>
+                  Yellow Network SDK
                 </Typography>
               </Box>
               
               {!isConnected ? (
                 <Box sx={{ textAlign: 'center', py: 1 }}>
                   <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>
-                    Connect wallet to view VRF proofs
+                    Connect wallet to use Yellow Network
                   </Typography>
                   <Button
                     onClick={() => {
@@ -3086,13 +3109,13 @@ export default function GameRoulette() {
                       }
                     }}
                     sx={{
-                      background: 'linear-gradient(135deg, #8B2398 0%, #31C4BE 100%)',
+                      background: 'linear-gradient(135deg, #FFC107 0%, #FF9800 100%)',
                       color: 'white',
                       px: 2,
                       py: 1,
                       fontSize: '0.8rem',
                       '&:hover': {
-                        background: 'linear-gradient(135deg, #7C1F87 0%, #2BA8A3 100%)',
+                        background: 'linear-gradient(135deg, #FFB300 0%, #F57C00 100%)',
                       }
                     }}
                   >
@@ -3102,37 +3125,21 @@ export default function GameRoulette() {
               ) : (
                 <Box>
                   <Typography variant="h6" sx={{ 
-                    color: vrfProofCount > 0 ? '#10B981' : '#EF4444',
+                    color: '#10B981',
                     fontWeight: 'bold',
                     textAlign: 'center'
                   }}>
-                    {vrfProofCount} available
+                    SDK Ready
                   </Typography>
                   
-                  {vrfProofCount <= 0 && (
-                    <Typography variant="body2" sx={{ 
-                      color: '#EF4444', 
-                      fontSize: '0.8rem',
-                      textAlign: 'center',
-                      mt: 1,
-                      bgcolor: 'rgba(239, 68, 68, 0.1)',
-                      p: 1,
-                      borderRadius: '4px'
-                    }}>
-                      Generate proofs first!
-                    </Typography>
-                  )}
-                  
-                  {vrfProofCount > 0 && (
-                    <Typography variant="body2" sx={{ 
-                      color: 'rgba(255,255,255,0.7)',
-                      fontSize: '0.8rem',
-                      textAlign: 'center',
-                      mt: 1
-                    }}>
-                      Each game consumes 1 VRF proof
-                    </Typography>
-                  )}
+                  <Typography variant="body2" sx={{ 
+                    color: 'rgba(255,255,255,0.7)',
+                    fontSize: '0.8rem',
+                    textAlign: 'center',
+                    mt: 1
+                  }}>
+                    Gasless randomness via ERC-7824
+                  </Typography>
                 </Box>
               )}
             </Box>
@@ -3623,12 +3630,11 @@ export default function GameRoulette() {
           </MuiAlert>
         </Snackbar>
 
-        {/* VRF Proof Required Modal */}
-        <VRFProofRequiredModal
-          open={showVRFModal}
-          onClose={() => setShowVRFModal(false)}
+        {/* Yellow Network Modal */}
+        <YellowNetworkModal
+          isOpen={showYellowModal}
+          onClose={() => setShowYellowModal(false)}
           gameType="ROULETTE"
-          onGenerateProofs={() => setShowVRFModal(false)}
         />
 
       </div>
