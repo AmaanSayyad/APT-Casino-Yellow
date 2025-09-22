@@ -43,11 +43,14 @@ const YellowNetworkStatus = () => {
           const accessToken = process.env.YELLOW_ACCESS_TOKEN;
           
           if (channelId && accessToken) {
-            console.log('🟡 YELLOW NETWORK: Attempting real connection...');
+            console.log('🟡 YELLOW NETWORK: Attempting credentialed connection...');
             await connect(channelId, accessToken);
-            console.log('✅ YELLOW NETWORK: Real connection established');
+            console.log('✅ YELLOW NETWORK: Connected with credentials');
           } else {
-            console.warn('⚠️  YELLOW NETWORK: No credentials found, connection will be required for games');
+            // Sandbox/public clearnode typically allows unauthenticated connect
+            console.log('🟡 YELLOW NETWORK: Connecting without credentials (Sandbox)...');
+            await connect();
+            console.log('✅ YELLOW NETWORK: Connected (unauthenticated)');
           }
           
           setAutoInitialized(true);

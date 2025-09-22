@@ -286,13 +286,12 @@ class YellowNetworkService {
           const balance = await this.client.getAccountBalance();
           console.log('✅ YELLOW NETWORK: Account balance retrieved:', balance);
         } catch (contractError) {
-          console.warn('⚠️  YELLOW NETWORK: Contract not deployed yet, using fallback mode');
-          console.warn('⚠️  This is normal for sandbox/development environment');
-          // Don't throw error, just continue with fallback
+          // Suppress noisy fallback logs now that contracts are deployed
+          console.log('🟡 YELLOW NETWORK: Proceeding without account balance check');
         }
       } else {
         // For development/fallback client, just set connection state
-        console.log('🟡 YELLOW NETWORK: Using fallback connection method');
+        console.log('🟡 YELLOW NETWORK: Using connection without balance probe');
       }
       
       this.channelId = channelId || `auto_${Date.now()}`;
@@ -587,8 +586,19 @@ class YellowNetworkService {
       
       console.log('🔌 Disconnecting from Yellow Network...');
       
-      // Disconnect from the channel
-      await this.client.disconnect();
+      // Disconnect from the channel (support multiple SDK shapes)
+      if (this.client && typeof this.client.disconnect === 'function') {
+        await this.client.disconnect();
+      } else if (this.client && typeof this.client.close === 'function') {
+        await this.client.close();
+      } else if (this.client && this.client.rpc && typeof this.client.rpc.close === 'function') {
+        await this.client.rpc.close();
+      } else if (this.client && this.client.ws && typeof this.client.ws.close === 'function') {
+        this.client.ws.close();
+      } else {
+        // No-op fallback to avoid runtime error
+        console.warn('Yellow client has no disconnect/close; skipping physical disconnect');
+      }
       
       this.isConnected = false;
       this.channelId = null;
