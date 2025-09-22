@@ -961,13 +961,7 @@ export default function Mines() {
         }
       `}</style>
 
-      {/* VRF Proof Required Modal */}
-      <VRFProofRequiredModal
-        open={showVRFModal}
-        onClose={() => setShowVRFModal(false)}
-        gameType="MINES"
-        onGenerateProofs={() => setShowVRFModal(false)}
-      />
+      {/* Yellow Network Modal can be added here if needed */}
     </div>
   );
 }

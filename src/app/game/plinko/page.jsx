@@ -194,39 +194,34 @@ export default function Plinko() {
     }
   };
 
-  const handleBetHistoryChange = (newBetResult) => {
+  const handleBetHistoryChange = async (newBetResult) => {
     console.log('🔍 handleBetHistoryChange called with:', newBetResult);
     
-    // Consume VRF proof for this game
+    // Use Yellow Network for randomness
     try {
-      console.log('🎯 Attempting to consume VRF proof for PLINKO...');
-      const vrfResult = vrfProofService.generateRandomFromProof('PLINKO');
-      console.log('🎲 Plinko game completed, VRF proof consumed:', vrfResult);
+      console.log('🎯 Using Yellow Network for Plinko randomness...');
+      const randomData = await yellowNetworkService.generateSecureRandom();
+      console.log('🎲 Plinko game completed with Yellow Network randomness:', randomData);
       
-      // Add VRF proof info to the bet result
+      // Add Yellow Network info to the bet result
       const enhancedBetResult = {
         ...newBetResult,
-        vrfProof: {
-          proofId: vrfResult.proofId,
-          transactionHash: vrfResult.transactionHash,
-          logIndex: vrfResult.logIndex,
-          requestId: vrfResult.requestId,
-          randomNumber: vrfResult.randomNumber
+        yellowNetwork: {
+          randomSeed: randomData.seed,
+          blockHash: randomData.blockHash,
+          timestamp: randomData.timestamp,
+          channelId: randomData.channelId
         },
-        timestamp: new Date().toISOString() // Use ISO string for better compatibility
+        timestamp: new Date().toISOString()
       };
       
       console.log('📝 Enhanced bet result:', enhancedBetResult);
       setGameHistory(prev => [enhancedBetResult, ...prev].slice(0, 100)); // Keep up to last 100 entries
       
-      // Log proof consumption
-      const stats = vrfProofService.getProofStats();
-      console.log(`📊 VRF Proof Stats after Plinko game:`, stats);
-      
     } catch (error) {
-      console.error('❌ Error consuming VRF proof for Plinko game:', error);
+      console.error('❌ Error using Yellow Network for Plinko game:', error);
       
-      // Still add the bet result even if VRF proof consumption fails
+      // Still add the bet result even if Yellow Network fails
       setGameHistory(prev => [newBetResult, ...prev].slice(0, 100));
     }
   };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -218,6 +219,14 @@ const Game = ({ betSettings = {}, onGameStatusChange, onGameComplete }) => {
     try {
       console.log('🟡 YELLOW NETWORK: Generating provably fair mine positions...');
       console.log('🔗 Using ERC-7824 state channels for gasless randomness');
+      
+      // Create game session if not exists
+      if (!yellowNetworkService.sessionId) {
+        await yellowNetworkService.createGameSession('MINES', {
+          gridSize: gridSize,
+          minesCount: validMines
+        });
+      }
       
       let bombsPlaced = 0;
       while (bombsPlaced < validMines) {
@@ -1013,7 +1022,7 @@ const Game = ({ betSettings = {}, onGameStatusChange, onGameComplete }) => {
           gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
         }}
       >
-        {grid.map((row, rowIndex) =>
+        {grid && Array.isArray(grid) ? grid.map((row, rowIndex) =>
           row.map((cell, colIndex) => (
             <motion.button
               key={`${rowIndex}-${colIndex}`}
@@ -1044,7 +1053,7 @@ const Game = ({ betSettings = {}, onGameStatusChange, onGameComplete }) => {
               {getCellContent(cell)}
             </motion.button>
           ))
-        )}
+        ) : null}
       </div>
       
       {/* Game Controls */}

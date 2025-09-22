@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp, Minus, Plus, Shield, AlertTriangle } from "lucide-react";
 import { useSelector } from 'react-redux';
 import useWalletStatus from '@/hooks/useWalletStatus';
-import vrfProofService from '@/services/VRFProofService';
+import yellowNetworkService from '@/services/YellowNetworkService';
 
 export default function GameControls({ onBet, onRowChange, onRiskLevelChange, onBetAmountChange, initialRows = 16, initialRiskLevel = "Medium" }) {
   const userBalance = useSelector((state) => state.balance.userBalance);
@@ -18,28 +18,27 @@ export default function GameControls({ onBet, onRowChange, onRiskLevelChange, on
   const [showRiskDropdown, setShowRiskDropdown] = useState(false);
   const [showRowsDropdown, setShowRowsDropdown] = useState(false);
   const [autoBetInterval, setAutoBetInterval] = useState(null);
-  const [vrfProofCount, setVrfProofCount] = useState(0);
+  const [yellowNetworkReady, setYellowNetworkReady] = useState(false);
 
   const riskLevels = ["Low", "Medium", "High"];
   const rowOptions = [8, 9, 10, 11, 12, 13, 14, 15, 16];
 
-  // Update VRF proof count
+  // Check Yellow Network status
   useEffect(() => {
-    const updateVrfProofCount = () => {
+    const checkYellowNetworkStatus = async () => {
       try {
-        const stats = vrfProofService.getProofStats();
-        const availableProofs = stats.availableVRFs.PLINKO || 0;
-        setVrfProofCount(availableProofs);
+        const isReady = await yellowNetworkService.isReady();
+        setYellowNetworkReady(isReady);
       } catch (error) {
-        console.error('Error getting VRF proof count:', error);
-        setVrfProofCount(0);
+        console.error('Error checking Yellow Network status:', error);
+        setYellowNetworkReady(false);
       }
     };
 
-    updateVrfProofCount();
+    checkYellowNetworkStatus();
     
-    // Update every 5 seconds
-    const interval = setInterval(updateVrfProofCount, 5000);
+    // Update every 10 seconds
+    const interval = setInterval(checkYellowNetworkStatus, 10000);
     
     return () => clearInterval(interval);
   }, []);
@@ -206,18 +205,9 @@ export default function GameControls({ onBet, onRowChange, onRiskLevelChange, on
       return;
     }
 
-    // Check if we have enough VRF proofs for all bets
-    const vrfStats = vrfProofService.getProofStats();
-    const availableProofs = vrfStats.availableVRFs.PLINKO || 0;
-    
-    console.log('Auto betting VRF proof check:', {
-      totalBets,
-      availableProofs,
-      hasEnoughProofs: availableProofs >= totalBets
-    });
-    
-    if (availableProofs < totalBets) {
-      alert(`Insufficient VRF proofs for ${totalBets} bets. You need ${totalBets} proofs but have ${availableProofs} available. Please generate more VRF proofs first.`);
+    // Check if Yellow Network is ready for all bets
+    if (!yellowNetworkReady) {
+      alert(`Yellow Network is not ready. Please check your connection and try again.`);
       setIsAutoPlaying(false);
       return;
     }
@@ -242,7 +232,7 @@ export default function GameControls({ onBet, onRowChange, onRiskLevelChange, on
     // Then continue with recursive setTimeout instead of setInterval
     let shouldContinue = true;
     
-    const scheduleNextBet = () => {
+    const scheduleNextBet = async () => {
       console.log('🔄 Scheduling next bet, localCurrentBet:', localCurrentBet, 'totalBets:', totalBets, 'shouldContinue:', shouldContinue);
       
       // Check if auto betting was stopped
@@ -266,13 +256,21 @@ export default function GameControls({ onBet, onRowChange, onRiskLevelChange, on
         return;
       }
       
-      // Check VRF proof availability before each bet
-      const vrfStats = vrfProofService.getProofStats();
-      const availableProofs = vrfStats.availableVRFs.PLINKO || 0;
-      
-      if (availableProofs <= 0) {
-        console.log('❌ No VRF proofs available, stopping auto betting');
-        alert('No VRF proofs available. Auto betting stopped.');
+      // Check Yellow Network availability before each bet
+      try {
+        const isNetworkReady = await yellowNetworkService.isReady();
+        
+        if (!isNetworkReady) {
+          console.log('❌ Yellow Network not ready, stopping auto betting');
+          alert('Yellow Network connection lost. Auto betting stopped.');
+          setIsAutoPlaying(false);
+          setAutoBetInterval(null);
+          
+          return;
+        }
+      } catch (error) {
+        console.log('❌ Error checking Yellow Network, stopping auto betting');
+        alert('Yellow Network error. Auto betting stopped.');
         setIsAutoPlaying(false);
         setAutoBetInterval(null);
         
@@ -292,12 +290,12 @@ export default function GameControls({ onBet, onRowChange, onRiskLevelChange, on
         console.log('🎯 Auto bet completed, localCurrentBet:', localCurrentBet, 'remaining:', totalBets - localCurrentBet);
         
         // Schedule next bet after 1 second
-        setTimeout(scheduleNextBet, 1000);
+        setTimeout(() => scheduleNextBet(), 1000);
       }
     };
     
     // Schedule the first recursive bet
-    setTimeout(scheduleNextBet, 1000);
+    setTimeout(() => scheduleNextBet(), 1000);
     
     // Store the shouldContinue reference in window for stopAutoBetting to access
     if (!window.autoBetShouldContinue) {
@@ -383,21 +381,21 @@ export default function GameControls({ onBet, onRowChange, onRiskLevelChange, on
 
   return (
     <div className="bg-[#1A0015] rounded-xl border border-[#333947] p-6">
-      {/* VRF Proof Status */}
-      <div className="mb-4 p-3 bg-gradient-to-r from-purple-900/20 to-pink-900/20 rounded-lg border border-purple-800/30">
+      {/* Yellow Network Status */}
+      <div className="mb-4 p-3 bg-gradient-to-r from-yellow-900/20 to-orange-900/20 rounded-lg border border-yellow-800/30">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Shield size={16} className="text-purple-300" />
-            <span className="text-sm font-medium text-purple-300">VRF Proofs</span>
+            <Shield size={16} className="text-yellow-300" />
+            <span className="text-sm font-medium text-yellow-300">Yellow Network</span>
           </div>
-          {isConnected && vrfProofCount <= 0 && (
+          {isConnected && !yellowNetworkReady && (
             <AlertTriangle size={16} className="text-red-400" />
           )}
         </div>
         
         {!isConnected ? (
           <div className="text-center py-2">
-            <div className="text-sm text-gray-400 mb-2">Connect wallet to view VRF proofs</div>
+            <div className="text-sm text-gray-400 mb-2">Connect wallet to use Yellow Network</div>
             <button
               onClick={() => {
                 // Trigger wallet connection
@@ -405,7 +403,7 @@ export default function GameControls({ onBet, onRowChange, onRiskLevelChange, on
                   window.ethereum.request({ method: 'eth_requestAccounts' });
                 }
               }}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all"
             >
               Connect Wallet
             </button>
@@ -414,21 +412,21 @@ export default function GameControls({ onBet, onRowChange, onRiskLevelChange, on
           <>
             <div className="flex items-center justify-between">
               <span className={`text-lg font-bold ${
-                vrfProofCount > 0 ? 'text-green-400' : 'text-red-400'
+                yellowNetworkReady ? 'text-green-400' : 'text-red-400'
               }`}>
-                {vrfProofCount} available
+                {yellowNetworkReady ? 'Ready' : 'Not Ready'}
               </span>
               
-              {vrfProofCount <= 0 && (
+              {!yellowNetworkReady && (
                 <span className="text-xs text-red-400 bg-red-900/20 px-2 py-1 rounded">
-                  Generate proofs first!
+                  Check connection!
                 </span>
               )}
             </div>
             
-            {vrfProofCount > 0 && (
-              <div className="mt-2 text-xs text-purple-300">
-                Each game consumes 1 VRF proof
+            {yellowNetworkReady && (
+              <div className="mt-2 text-xs text-yellow-300">
+                Gasless gaming with state channels
               </div>
             )}
           </>

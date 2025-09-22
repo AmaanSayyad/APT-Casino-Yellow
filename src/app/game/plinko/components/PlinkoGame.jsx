@@ -3,10 +3,9 @@ import { useState, forwardRef, useImperativeHandle, useCallback, useEffect, useR
 import Matter from 'matter-js';
 import { useSelector, useDispatch } from 'react-redux';
 import { setBalance, addToBalance, subtractFromBalance } from '@/store/balanceSlice';
-import vrfProofService from '@/services/VRFProofService';
+import yellowNetworkService from '@/services/YellowNetworkService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPlay, FaPause, FaRedo, FaCog, FaInfoCircle } from 'react-icons/fa';
-import VRFProofRequiredModal from '@/components/VRF/VRFProofRequiredModal';
 
 const PlinkoGame = forwardRef(({ rowCount = 16, riskLevel = "Medium", onRowChange, betAmount = 0, onBetHistoryChange }, ref) => {
   const dispatch = useDispatch();
@@ -19,7 +18,7 @@ const PlinkoGame = forwardRef(({ rowCount = 16, riskLevel = "Medium", onRowChang
   const [currentRiskLevel, setCurrentRiskLevel] = useState(riskLevel);
   const [isRecreating, setIsRecreating] = useState(false);
   const [betHistory, setBetHistory] = useState([]);
-  const [showVRFModal, setShowVRFModal] = useState(false);
+  const [showNetworkModal, setShowNetworkModal] = useState(false);
   
   // Physics engine refs
   const engineRef = useRef(null);
@@ -563,11 +562,18 @@ const PlinkoGame = forwardRef(({ rowCount = 16, riskLevel = "Medium", onRowChang
   }, [currentRows, currentRiskLevel, initializePhysics]);
 
   // Function to start a bet and drop the ball
-  const dropBall = useCallback(() => {
-    // Check VRF proofs before starting game
-    const proofStats = vrfProofService.getProofStats();
-    if (proofStats.availableVRFs.PLINKO <= 0) {
-      setShowVRFModal(true);
+  const dropBall = useCallback(async () => {
+    // Check Yellow Network before starting game
+    try {
+      const isReady = await yellowNetworkService.isReady();
+      if (!isReady) {
+        setShowNetworkModal(true);
+        console.log('❌ Yellow Network not ready for PLINKO');
+        return;
+      }
+    } catch (error) {
+      console.error('❌ Error checking Yellow Network:', error);
+      alert('Yellow Network connection error. Please try again.');
       return;
     }
     
@@ -828,13 +834,23 @@ const PlinkoGame = forwardRef(({ rowCount = 16, riskLevel = "Medium", onRowChang
         </div>
       </div>
 
-      {/* VRF Proof Required Modal */}
-      <VRFProofRequiredModal
-        open={showVRFModal}
-        onClose={() => setShowVRFModal(false)}
-        gameType="PLINKO"
-        onGenerateProofs={() => setShowVRFModal(false)}
-      />
+      {/* Yellow Network Status Modal */}
+      {showNetworkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-[#1A0015] border border-[#333947] rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-semibold text-white mb-3">Yellow Network Required</h3>
+            <p className="text-gray-300 text-sm mb-4">
+              Yellow Network connection is required to play Plinko. Please check your connection and try again.
+            </p>
+            <button
+              onClick={() => setShowNetworkModal(false)}
+              className="w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white font-medium py-3 rounded-lg"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

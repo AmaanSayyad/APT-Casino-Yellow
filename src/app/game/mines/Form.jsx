@@ -4,14 +4,14 @@ import CustomSelect from "@/components/CustomSelect";
 import CustomInput from "@/components/CustomInput";
 import { motion, AnimatePresence } from "framer-motion";
 import { Shield } from "lucide-react";
-import vrfProofService from '@/services/VRFProofService';
+import yellowNetworkService from '@/services/YellowNetworkService';
 import useWalletStatus from '@/hooks/useWalletStatus';
 
 const DynamicForm = ({ config, onSubmit, gameStatus = { isPlaying: false, hasPlacedBet: false } }) => {
   // State to manage form values
   const [formData, setFormData] = useState({});
   const [expanded, setExpanded] = useState(true);
-  const [vrfProofCount, setVrfProofCount] = useState(0);
+  const [yellowNetworkReady, setYellowNetworkReady] = useState(false);
   
   // Wallet status
   const { isConnected } = useWalletStatus();
@@ -27,23 +27,23 @@ const DynamicForm = ({ config, onSubmit, gameStatus = { isPlaying: false, hasPla
     setFormData(initialData);
   }, [config]);
 
-  // Update VRF proof count every 5 seconds
+  // Check Yellow Network status every 10 seconds
   useEffect(() => {
-    const updateVrfProofCount = () => {
+    const checkYellowNetworkStatus = async () => {
       try {
-        const proofStats = vrfProofService.getProofStats();
-        setVrfProofCount(proofStats.availableVRFs.MINES || 0);
+        const isReady = await yellowNetworkService.isReady();
+        setYellowNetworkReady(isReady);
       } catch (error) {
-        console.error('Error updating VRF proof count:', error);
-        setVrfProofCount(0);
+        console.error('Error checking Yellow Network status:', error);
+        setYellowNetworkReady(false);
       }
     };
 
-    // Update immediately
-    updateVrfProofCount();
+    // Check immediately
+    checkYellowNetworkStatus();
 
-    // Update every 5 seconds
-    const interval = setInterval(updateVrfProofCount, 5000);
+    // Check every 10 seconds
+    const interval = setInterval(checkYellowNetworkStatus, 10000);
 
     return () => clearInterval(interval);
   }, []);
@@ -138,12 +138,12 @@ const DynamicForm = ({ config, onSubmit, gameStatus = { isPlaying: false, hasPla
         </button>
       </div>
 
-      {/* VRF Proof Status */}
-      <div className="bg-gradient-to-r from-purple-900/20 to-pink-900/20 p-3 border-b border-purple-900/30">
+      {/* Yellow Network Status */}
+      <div className="bg-gradient-to-r from-yellow-900/20 to-orange-900/20 p-3 border-b border-yellow-900/30">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Shield size={16} className="text-purple-300" />
-            <span className="text-sm font-medium text-purple-300">VRF Proofs</span>
+            <Shield size={16} className="text-yellow-300" />
+            <span className="text-sm font-medium text-yellow-300">Yellow Network</span>
           </div>
           
           {!isConnected ? (
@@ -152,16 +152,16 @@ const DynamicForm = ({ config, onSubmit, gameStatus = { isPlaying: false, hasPla
             </span>
           ) : (
             <span className={`text-sm font-bold ${
-              vrfProofCount > 0 ? 'text-green-400' : 'text-red-400'
+              yellowNetworkReady ? 'text-green-400' : 'text-red-400'
             }`}>
-              {vrfProofCount} available
+              {yellowNetworkReady ? 'Ready' : 'Not Ready'}
             </span>
           )}
         </div>
         
         {!isConnected ? (
           <div className="mt-2 text-center">
-            <div className="text-xs text-gray-400 mb-2">Connect wallet to view VRF proofs</div>
+            <div className="text-xs text-gray-400 mb-2">Connect wallet to use Yellow Network</div>
             <button
               onClick={() => {
                 // Trigger wallet connection
@@ -176,15 +176,15 @@ const DynamicForm = ({ config, onSubmit, gameStatus = { isPlaying: false, hasPla
           </div>
         ) : (
           <>
-            {vrfProofCount <= 0 && (
+            {!yellowNetworkReady && (
               <div className="mt-2 text-xs text-red-400 bg-red-900/20 px-2 py-1 rounded">
-                Generate proofs first!
+                Check connection!
               </div>
             )}
             
-            {vrfProofCount > 0 && (
-              <div className="mt-2 text-xs text-purple-300">
-                Each game consumes 1 VRF proof
+            {yellowNetworkReady && (
+              <div className="mt-2 text-xs text-yellow-300">
+                Gasless gaming with state channels
               </div>
             )}
           </>
