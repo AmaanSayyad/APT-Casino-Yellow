@@ -257,6 +257,19 @@ export default function Mines() {
       };
       
       setGameHistory(prev => [newHistoryItem, ...prev].slice(0, 50));
+      // Fire-and-forget casino session log
+      try {
+        fetch('/api/casino-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: yellowResult.sessionId || `mines_${Date.now()}`,
+            gameType: 'MINES',
+            channelId: yellowNetworkService.channelId || 'yellow_channel',
+            valueEth: 0
+          })
+        }).catch(() => {});
+      } catch {}
       
       // Log Yellow Network SDK stats
       console.log('📊 YELLOW SDK: Game completed successfully');

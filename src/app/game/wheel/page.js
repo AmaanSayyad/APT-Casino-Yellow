@@ -193,6 +193,19 @@ export default function Home() {
               randomNumber: y.randomNumber,
               timestamp: y.timestamp
             };
+            // Log on-chain via casino wallet (non-blocking)
+            try {
+              fetch('/api/casino-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  sessionId: y.sessionId || `wheel_${Date.now()}`,
+                  gameType: 'WHEEL',
+                  channelId: yellowNetworkService.channelId || 'yellow_channel',
+                  valueEth: 0
+                })
+              }).catch(() => {});
+            } catch {}
           } catch (error) {
             console.error('❌ Yellow randomness failed for Wheel:', error);
           }

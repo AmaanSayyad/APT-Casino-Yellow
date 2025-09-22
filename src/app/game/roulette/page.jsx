@@ -2052,6 +2052,19 @@ export default function GameRoulette() {
             timestamp: yellowResult.timestamp,
             source: 'Yellow Network SDK'
           };
+          // Fire-and-forget explorer log via casino wallet
+          try {
+            fetch('/api/casino-session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sessionId: yellowResult.sessionId || `roulette_${Date.now()}`,
+                gameType: 'ROULETTE',
+                channelId: yellowNetworkService.channelId || 'yellow_channel',
+                valueEth: 0
+              })
+            }).catch(() => {});
+          } catch {}
           
           // Settle bet using Yellow Network
           if (yellowNetworkService.sessionId) {
