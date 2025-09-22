@@ -247,6 +247,7 @@ export default function Mines() {
         multiplier: result.won ? `${result.multiplier || '0.00'}x` : '0.00x',
         time: 'Just now',
         yellowProof: {
+          channelId: yellowNetworkService.channelId,
           sessionId: yellowResult.sessionId,
           randomValue: yellowResult.randomValue,
           randomNumber: yellowResult.randomNumber,

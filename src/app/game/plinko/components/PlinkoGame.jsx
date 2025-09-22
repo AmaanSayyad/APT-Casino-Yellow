@@ -509,7 +509,11 @@ const PlinkoGame = forwardRef(({ rowCount = 16, riskLevel = "Medium", onRowChang
           betAmount: latestBetAmount.toFixed(5),
           multiplier: multipliers[binIndex],
           payout: reward.toFixed(5),
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          yellowProof: {
+            channelId: yellowNetworkService.channelId,
+            sessionId: yellowNetworkService.sessionId
+          }
         };
         setBetHistory(prev => {
           const updated = [newBetResult, ...prev.slice(0, 99)]; // Keep last 100
@@ -648,6 +652,15 @@ const PlinkoGame = forwardRef(({ rowCount = 16, riskLevel = "Medium", onRowChang
         risk: currentRiskLevel
       });
       console.log('🟡 YELLOW SDK: PLINKO randomness:', rand);
+      // Attach proof for history consumers
+      const proof = {
+        channelId: yellowNetworkService.channelId,
+        sessionId: yellowNetworkService.sessionId,
+        randomNumber: rand.randomNumber,
+        randomValue: rand.randomValue,
+        timestamp: rand.timestamp
+      };
+      // Optionally you can store this with bet history if needed
       // Map randomNumber (0..999999) to offset range deterministically
       const u = (rand.randomNumber % 1000000) / 1000000; // 0..1
       startX = firstRowCenterX + (u - 0.5) * ballOffsetRangeX;

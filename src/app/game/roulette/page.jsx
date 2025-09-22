@@ -2045,6 +2045,7 @@ export default function GameRoulette() {
           
           // Add Yellow Network proof info to the bet result
           newBet.yellowProof = {
+            channelId: yellowNetworkService.channelId,
             sessionId: yellowResult.sessionId,
             randomValue: yellowResult.randomValue,
             randomNumber: yellowResult.randomNumber,

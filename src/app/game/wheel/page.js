@@ -187,6 +187,7 @@ export default function Home() {
             const y = await yellowNetworkService.generateRandom({ purpose: 'wheel_spin', gameType: 'WHEEL' });
             console.log('🟡 YELLOW SDK: WHEEL randomness:', y);
             newHistoryItem.yellowProof = {
+              channelId: yellowNetworkService.channelId,
               sessionId: y.sessionId,
               randomValue: y.randomValue,
               randomNumber: y.randomNumber,

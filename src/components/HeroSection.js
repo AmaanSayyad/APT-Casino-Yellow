@@ -40,7 +40,7 @@ export default function HeroSection() {
           </span>
         </h1>
         <h2 className="text-[#B3B3B3] mt-4 text-lg sm:text-xl leading-relaxed max-w-3xl">
-          <span className="text-white font-semibold">Autonomous Provably Transparent</span> gaming powered by <span className="text-white font-semibold">Arbitrum</span> & <span className="text-white font-semibold">Chainlink VRF</span>. Experience lightning-fast 250ms blocks with cryptographic fairness you can verify, not just trust.
+          <span className="text-white font-semibold">Autonomous Provably Transparent</span> gaming powered by <span className="text-white font-semibold">Arbitrum</span> & <span className="text-white font-semibold">Yellow Network (ERC‑7824)</span>. Experience instant, gasless state‑channel gameplay with cryptographic fairness you can verify, not just trust.
         </h2>
         <p className="text-[#B3B3B3] text-lg sm:text-xl max-w-3xl">
           No rigged outcomes. No hidden limits. No custody of your funds. 
@@ -77,9 +77,9 @@ export default function HeroSection() {
             </p>
           </div>
           <div className="text-center hidden sm:block">
-            <p className="text-gray-400 text-sm">VRF Speed</p>
+            <p className="text-gray-400 text-sm">Channel Finality</p>
             <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-magic to-blue-magic">
-              1.5s
+              ~instant
             </p>
           </div>
           <div className="text-center hidden md:block">

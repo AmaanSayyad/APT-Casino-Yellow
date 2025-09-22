@@ -9,31 +9,31 @@ const ProvablyFairSection = () => {
   const steps = [
     {
       id: 1,
-      title: 'Chainlink VRF Request',
-      description: 'When you start a game, our smart contract requests verifiable randomness from Chainlink VRF on Arbitrum. This process is fully on-chain and transparent.',
+      title: 'Yellow Session Open',
+      description: 'When you start a game, a Yellow Network (ERC‑7824) session is created over Sandbox Clearnode. Interactions run off‑chain in a state channel for instant, gasless play.',
       icon: 'client-seed',
-      code: 'requestId = vrfCoordinator.requestRandomWords(\n  keyHash,\n  subscriptionId,\n  requestConfirmations,\n  callbackGasLimit,\n  numWords\n);'
+      code: 'const session = await nitrolite.createSession({\n  appId: "apt-casino-mines",\n  params: { gameType: "MINES" }\n});'
     },
     {
       id: 2,
-      title: 'Randomness Generation',
-      description: 'Chainlink VRF generates cryptographically secure random numbers and delivers them to our smart contract within 1.5 seconds (6 Arbitrum blocks).',
+      title: 'Provable Randomness',
+      description: 'Randomness is requested via the Yellow SDK and derived from cryptographic channel state, providing provably fair results without block delays.',
       icon: 'server-seed',
-      code: '// Chainlink VRF generates random values\n// and delivers them on-chain\nrandomWords = generateVerifiableRandomValue();\n// 6 Arbitrum blocks ≈ 1.5 seconds'
+      code: 'const r = await nitrolite.callSessionMethod({\n  sessionId: session.id,\n  method: "generateSecureRandom",\n  params: { purpose: "roulette_spin" }\n});'
     },
     {
       id: 3,
-      title: 'On-Chain Verification',
-      description: 'The randomness is verified on-chain through cryptographic proofs, ensuring that neither players nor casino operators can manipulate the outcome.',
+      title: 'Settlement Path',
+      description: 'Gameplay is off‑chain; only opening/closing channels and optional payouts touch Arbitrum Sepolia for finality and audits.',
       icon: 'calculation',
-      code: 'function fulfillRandomWords(\n  uint256 requestId,\n  uint256[] memory randomWords\n) internal override {\n  // Store verified random values\n  requests[requestId].randomWords = randomWords;\n  requests[requestId].fulfilled = true;\n}'
+      code: '// On cashout\nawait nitrolite.closeSession({ sessionId: session.id });\n// Optional: settle winnings on-chain'
     },
     {
       id: 4,
       title: 'Transparent Results',
-      description: 'Game results are determined by the verified random numbers and can be independently verified by anyone through the Arbitrum blockchain explorer.',
+      description: 'Each entry shows Channel ID and Session ID so players can correlate actions across the state channel lifecycle.',
       icon: 'verification',
-      code: '// After game completes\nconst requestId = game.vrfRequestId;\nconst randomResult = vrfContract.getRandomWords(requestId);\nconst verified = verifyOnChain(randomResult);\nconsole.log("Verified on-chain:", verified);'
+      code: '// UI surfaces\n// yellowProof.channelId, yellowProof.sessionId\nconsole.log(channelId, sessionId);'
     },
   ];
   
@@ -46,7 +46,7 @@ const ProvablyFairSection = () => {
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="flex items-center mb-8">
           <div className="w-1 h-6 bg-gradient-to-r from-red-magic to-blue-magic rounded-full mr-3"></div>
-          <h2 className="text-2xl font-display font-bold text-white">Chainlink VRF Powered Fairness</h2>
+          <h2 className="text-2xl font-display font-bold text-white">Yellow Network Powered Fairness</h2>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -54,19 +54,18 @@ const ProvablyFairSection = () => {
           <div className="lg:col-span-5">
             <div className="p-[1px] bg-gradient-to-r from-red-magic to-blue-magic rounded-xl h-full">
               <div className="bg-[#1A0015] rounded-xl p-6 h-full">
-                <h3 className="text-white text-xl font-medium mb-4">What is Chainlink VRF?</h3>
+                <h3 className="text-white text-xl font-medium mb-4">What is Yellow Network?</h3>
                 <p className="text-white/80 mb-6">
-                  Chainlink VRF (Verifiable Random Function) is a provably fair and verifiable source of randomness designed for 
-                  smart contracts. Unlike traditional RNG systems, Chainlink VRF is cryptographically secure and fully verifiable 
-                  on-chain, ensuring that neither APT-Casino nor any other party can manipulate game outcomes.
+                  Yellow Network is a Layer‑3 state channel protocol (ERC‑7824) enabling instant, gasless, provably fair gameplay.
+                  Randomness and moves occur off‑chain via Clearnode, while settlement can occur on Arbitrum Sepolia.
                 </p>
                 
                 <div className="bg-[#250020] p-4 rounded-lg mb-6 border-l-2 border-red-magic">
-                  <h4 className="text-white font-medium mb-2">Why Chainlink VRF matters</h4>
+                  <h4 className="text-white font-medium mb-2">Why Yellow matters</h4>
                   <ul className="text-white/70 text-sm space-y-2 list-disc pl-4">
-                    <li>Cryptographically guaranteed randomness</li>
-                    <li>Fully verifiable on the Arbitrum blockchain</li>
-                    <li>Lightning-fast results (1.5 seconds)</li>
+                    <li>Cryptographically guaranteed randomness (channel state)</li>
+                    <li>Instant, gasless gameplay; on‑chain only for settlement</li>
+                    <li>High throughput suitable for games</li>
                     <li>Immune to manipulation by players, casino, or validators</li>
                     <li>Transparent process from request to result</li>
                   </ul>
@@ -92,7 +91,7 @@ const ProvablyFairSection = () => {
           <div className="lg:col-span-7">
             <div className="p-[1px] bg-gradient-to-r from-red-magic/40 to-blue-magic/40 rounded-xl">
               <div className="bg-[#1A0015] rounded-xl p-6">
-                <h3 className="text-white text-xl font-medium mb-4">How Chainlink VRF Works</h3>
+                <h3 className="text-white text-xl font-medium mb-4">How Yellow Randomness Works</h3>
                 
                 {/* Steps tabs */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-6">

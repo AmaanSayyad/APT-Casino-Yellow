@@ -13,27 +13,20 @@ import {
 } from '@mui/material';
 import { ExternalLink, Copy, CheckCircle } from 'lucide-react';
 import { ExpandMore, ExpandLess } from '@mui/icons-material';
-import vrfProofService from '../../services/VRFProofService';
+import yellowNetworkService from '@/services/YellowNetworkService';
 
 const GameHistoryCard = ({ game, gameType }) => {
   const [expanded, setExpanded] = useState(false);
-  const [proofInfo, setProofInfo] = useState(null);
+  const [yellowChannelId, setYellowChannelId] = useState(null);
+  const [yellowSessionId, setYellowSessionId] = useState(null);
 
-  // Get VRF proof info for this game
-  const getProofInfo = () => {
-    if (!proofInfo) {
-      // Try to find proof by game result timestamp or other identifier
-      const consumedProofs = vrfProofService.getConsumedProofs(gameType, 100);
-      const proof = consumedProofs.find(p => 
-        p.gameResult && p.gameResult.timestamp === game.timestamp
-      );
-      
-      if (proof) {
-        setProofInfo(proof);
-      }
-    }
-    return proofInfo;
-  };
+  useEffect(() => {
+    // Prefer proof from game record; fallback to current service channel
+    const chId = game?.yellowProof?.channelId || yellowNetworkService.channelId || null;
+    const sessId = game?.yellowProof?.sessionId || yellowNetworkService.sessionId || null;
+    setYellowChannelId(chId);
+    setYellowSessionId(sessId);
+  }, [game]);
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
@@ -71,7 +64,7 @@ const GameHistoryCard = ({ game, gameType }) => {
     return '🤝 DRAW';
   };
 
-  const proof = getProofInfo();
+  const proof = null; // VRF removed in Yellow mode
 
   return (
     <Card 
@@ -150,84 +143,39 @@ const GameHistoryCard = ({ game, gameType }) => {
           </Grid>
         </Box>
 
-        {/* VRF Proof Information */}
-        {proof && (
-          <Box sx={{ 
-            mb: 2, 
-            p: 2, 
-            bgcolor: 'rgba(49, 196, 190, 0.1)', 
-            borderRadius: '8px',
-            border: '1px solid rgba(49, 196, 190, 0.3)'
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <CheckCircle size={16} color="#31C4BE" />
-              <Typography variant="subtitle2" sx={{ 
-                color: '#31C4BE', 
-                fontWeight: 'bold' 
-              }}>
-                🔐 VRF Proof Verification
-              </Typography>
-            </Box>
-            
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                  Request ID:
-                </Typography>
-                <Typography variant="body2" sx={{ 
-                  color: 'white', 
-                  fontFamily: 'monospace',
-                  fontSize: '0.8rem'
-                }}>
-                  {proof.requestId.slice(0, 8)}...{proof.requestId.slice(-8)}
-                </Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                  Log Index:
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'white', fontWeight: 'bold' }}>
-                  #{proof.logIndex}
-                </Typography>
-              </Grid>
-            </Grid>
-            
-            <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => copyToClipboard(proof.requestId)}
-                startIcon={<Copy size={14} />}
-                sx={{ 
-                  color: '#31C4BE',
-                  borderColor: '#31C4BE',
-                  '&:hover': {
-                    borderColor: '#2BA8A3',
-                    backgroundColor: 'rgba(49, 196, 190, 0.1)'
-                  }
-                }}
-              >
-                Copy Request ID
-              </Button>
-              
-              <Button
-                size="small"
-                variant="contained"
-                onClick={() => openTransaction(proof.transactionHash, proof.logIndex)}
-                startIcon={<ExternalLink size={14} />}
-                sx={{ 
-                  backgroundColor: '#31C4BE',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: '#2BA8A3'
-                  }
-                }}
-              >
-                View on Etherscan
-              </Button>
-            </Box>
+        {/* Yellow Channel Info */}
+        <Box sx={{ 
+          mb: 2, 
+          p: 2, 
+          bgcolor: 'rgba(255, 193, 7, 0.08)', 
+          borderRadius: '8px',
+          border: '1px solid rgba(255, 193, 7, 0.3)'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <CheckCircle size={16} color="#FFC107" />
+            <Typography variant="subtitle2" sx={{ color: '#FFC107', fontWeight: 'bold' }}>
+              🟡 Yellow Channel
+            </Typography>
           </Box>
-        )}
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                Channel ID:
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'white', fontFamily: 'monospace' }}>
+                {yellowChannelId ? `${String(yellowChannelId).slice(0, 10)}...` : 'N/A'}
+              </Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                Session ID:
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'white', fontFamily: 'monospace' }}>
+                {yellowSessionId ? `${String(yellowSessionId).slice(0, 10)}...` : 'N/A'}
+              </Typography>
+            </Grid>
+          </Grid>
+        </Box>
 
         {/* Expanded Content */}
         <Collapse in={expanded}>

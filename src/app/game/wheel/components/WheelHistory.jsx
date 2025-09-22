@@ -465,7 +465,7 @@ const WheelHistory = ({ gameHistory = [] }) => {
                   borderBottom: '1px solid rgba(104, 29, 219, 0.2)'
                 }}
               >
-                VRF Proof
+                Yellow Channel
               </TableCell>
             </TableRow>
           </TableHead>
@@ -572,53 +572,18 @@ const WheelHistory = ({ gameHistory = [] }) => {
                       borderBottom: '1px solid rgba(104, 29, 219, 0.1)'
                     }}
                   >
-                        {item.vrfProof ? (
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Chip 
-                            icon={<FaCheck size={10} />}
-                            label={item.vrfProof.requestId ? 
-                                  `${item.vrfProof.requestId.slice(0, 6)}...${item.vrfProof.requestId.slice(-4)}` : 
-                                  'N/A'
-                                }
-                            size="small"
-                            sx={{ 
-                              backgroundColor: 'rgba(20, 216, 84, 0.1)',
-                              border: '1px solid rgba(20, 216, 84, 0.2)',
-                              color: '#14D854',
-                              fontSize: '0.7rem',
-                              height: 20,
-                              '& .MuiChip-icon': {
-                                color: '#14D854',
-                                fontSize: '0.7rem',
-                              }
-                            }}
-                          />
-                          <Button
-                                onClick={() => openEtherscan(item.vrfProof.transactionHash)}
-                            size="small"
-                            startIcon={<FaExternalLinkAlt size={10} />}
-                            sx={{ 
-                              color: '#681DDB',
-                              fontSize: '0.7rem',
-                              minWidth: 'auto',
-                              p: 0,
-                              '&:hover': {
-                                backgroundColor: 'transparent',
-                                textDecoration: 'underline',
-                              }
-                            }}
-                          >
-                            TX
-                          </Button>
-                        </Box>
-                        <Typography variant="caption" color="rgba(255,255,255,0.5)">
-                              Log: #{item.vrfProof.logIndex || 0}
+                    {item.yellowProof ? (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)', fontFamily: 'monospace' }}>
+                          ch: {String(item.yellowProof.channelId || 'N/A').slice(0,10)}...
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace' }}>
+                          sess: {String(item.yellowProof.sessionId || 'N/A').slice(0,10)}...
                         </Typography>
                       </Box>
                     ) : (
                       <Typography variant="caption" color="rgba(255,255,255,0.3)">
-                        No proof
+                        N/A
                       </Typography>
                     )}
                   </TableCell>

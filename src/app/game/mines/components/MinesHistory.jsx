@@ -242,9 +242,8 @@ const MinesHistory = ({ gameHistory = [], userStats = {} }) => {
           </div>
           <div 
             className="flex items-center cursor-pointer hover:text-white/90 transition-colors text-white/70"
-            onClick={() => handleSort('vrfProof')}
           >
-            VRF Proof <SortIcon field="vrfProof" />
+            Yellow Channel
           </div>
         </div>
         
@@ -311,29 +310,13 @@ const MinesHistory = ({ gameHistory = [], userStats = {} }) => {
                 <span>{game.time}</span>
               </div>
               <div className="text-white/70 flex items-center justify-center">
-                {game.vrfProof ? (
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs text-green-400 font-mono">
-                        {game.vrfProof.requestId ? 
-                          `${game.vrfProof.requestId.slice(0, 6)}...${game.vrfProof.requestId.slice(-4)}` : 
-                          'N/A'
-                        }
-                      </span>
-                      <button
-                        onClick={() => openArbiscan(game.vrfProof.transactionHash)}
-                        className="text-blue-400 hover:text-blue-300 text-xs underline cursor-pointer"
-                        title="View on Arbiscan"
-                      >
-                        TX
-                      </button>
-                    </div>
-                    <div className="text-xs text-gray-400">
-                      Log: #{game.vrfProof.logIndex || 0}
-                    </div>
+                {game.yellowProof ? (
+                  <div className="text-xs text-gray-300 font-mono text-center">
+                    <div>ch: {String(game.yellowProof.channelId || 'N/A').slice(0,10)}...</div>
+                    <div>sess: {String(game.yellowProof.sessionId || 'N/A').slice(0,10)}...</div>
                   </div>
                 ) : (
-                  <span className="text-gray-500 text-xs">No proof</span>
+                  <span className="text-gray-500 text-xs">N/A</span>
                 )}
               </div>
             </motion.div>

@@ -368,7 +368,7 @@ const RouletteHistory = ({ bettingHistory = [] }) => {
                       <TableCell align="center">Amount</TableCell>
                       <TableCell align="center">Result</TableCell>
                       <TableCell align="right">Payout</TableCell>
-                      <TableCell align="center">VRF Proof</TableCell>
+                      <TableCell align="center">Yellow Channel</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -511,57 +511,18 @@ const RouletteHistory = ({ bettingHistory = [] }) => {
                           </Typography>
                         </TableCell>
                         <TableCell align="center">
-                          {bet.vrfProof ? (
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'center' }}>
-                              <Typography 
-                                variant="caption" 
-                                sx={{ 
-                                  color: '#10B981', 
-                                  fontFamily: 'monospace',
-                                  fontSize: '0.7rem',
-                                  fontWeight: 'medium'
-                                }}
-                              >
-                                {bet.vrfProof.requestId ? 
-                                  `${bet.vrfProof.requestId.slice(0, 6)}...${bet.vrfProof.requestId.slice(-4)}` : 
-                                  'N/A'
-                                }
+                          {bet.yellowProof ? (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, alignItems: 'center' }}>
+                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)', fontFamily: 'monospace' }}>
+                                ch: {String(bet.yellowProof.channelId || 'N/A').slice(0, 10)}...
                               </Typography>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <Typography 
-                                  variant="caption" 
-                                  sx={{ 
-                                    color: '#3B82F6', 
-                                    cursor: 'pointer',
-                                    textDecoration: 'underline',
-                                    fontSize: '0.65rem',
-                                    '&:hover': { color: '#60A5FA' }
-                                  }}
-                                  onClick={() => openArbiscan(bet.vrfProof.transactionHash)}
-                                  title="View on Arbiscan"
-                                >
-                                  TX
-                                </Typography>
-                                <Typography 
-                                  variant="caption" 
-                                  sx={{ 
-                                    color: 'rgba(255,255,255,0.6)', 
-                                    fontSize: '0.65rem'
-                                  }}
-                                >
-                                  Log: #{bet.vrfProof.logIndex || 0}
-                                </Typography>
-                              </Box>
+                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace' }}>
+                                sess: {String(bet.yellowProof.sessionId || 'N/A').slice(0, 10)}...
+                              </Typography>
                             </Box>
                           ) : (
-                            <Typography 
-                              variant="caption" 
-                              sx={{ 
-                                color: 'rgba(255,255,255,0.4)', 
-                                fontSize: '0.7rem'
-                              }}
-                            >
-                              No proof
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)' }}>
+                              N/A
                             </Typography>
                           )}
                         </TableCell>
