@@ -764,8 +764,8 @@ const Game = ({ betSettings = {}, onGameStatusChange, onGameComplete }) => {
       
       dispatch(setBalance(newBalance.toString()));
       
-      // Show brief confetti for wins
-      if (multiplier > 1.5) {
+      // Show confetti on any profitable cashout
+      if (payout > 0) {
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 3000);
       }
