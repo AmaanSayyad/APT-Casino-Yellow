@@ -3,6 +3,8 @@
  * Manages local storage of VRF proofs and integration with Chainlink VRF
  */
 
+import vrfLogger from './VRFLoggingService.js';
+
 class VRFProofService {
   constructor() {
     this.storageKey = 'vrf_proofs';
@@ -170,6 +172,15 @@ class VRFProofService {
     proof.consumedAt = new Date().toISOString();
     proof.gameResult = gameResult; // Store game result for reference
 
+    // Log VRF proof consumption
+    vrfLogger.logVRFProofConsumption(gameType, {
+      proofId: proof.id,
+      requestId: proof.requestId,
+      transactionHash: proof.transactionHash,
+      randomNumber: this.hashToRandom(proof.requestId + proof.timestamp),
+      logIndex: proof.logIndex
+    });
+
     // Move to consumed proofs
     if (!this.consumedProofs[gameType]) {
       this.consumedProofs[gameType] = [];
@@ -217,7 +228,9 @@ class VRFProofService {
       totalProofs: 0,
       activeProofs: 0,
       consumedProofs: 0,
-      consumedByGame: {}
+      consumedByGame: {},
+      totalGenerated: 0,
+      totalConsumed: 0
     };
 
     for (const gameType in this.proofs) {
@@ -230,7 +243,12 @@ class VRFProofService {
       stats.totalProofs += totalCount;
       stats.activeProofs += activeCount;
       stats.consumedProofs += consumedCount;
+      stats.totalGenerated += totalCount;
+      stats.totalConsumed += consumedCount;
     }
+
+    // Log VRF statistics
+    vrfLogger.logVRFStatistics(stats);
 
     return stats;
   }

@@ -1,170 +1,507 @@
 "use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { FaChartBar, FaChartPie, FaPercent, FaInfoCircle } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { Box, Typography, Paper, Button, Tooltip, Stack, Fade } from '@mui/material';
+import { FaChartPie, FaInfoCircle, FaThumbsUp, FaDice, FaQuestion, FaChevronRight, FaPercentage } from 'react-icons/fa';
+import Grid from "@mui/material/Unstable_Grid2";
 
 const WheelProbability = () => {
-  const [selectedRisk, setSelectedRisk] = useState('medium');
+  const [sortBy, setSortBy] = useState('probability'); // or 'multiplier'
+  const [selectedSegments, setSelectedSegments] = useState(50); // Default to 50 segments
   
-  const riskData = {
-    low: {
-      segments: [
-        { multiplier: '0x', count: 2, color: '#e74c3c', probability: '20%' },
-        { multiplier: '1.2x', count: 4, color: '#27ae60', probability: '40%' },
-        { multiplier: '1.5x', count: 2, color: '#2980b9', probability: '20%' },
-        { multiplier: '2x', count: 1, color: '#f39c12', probability: '10%' },
-        { multiplier: '3x', count: 1, color: '#9b59b6', probability: '10%' }
-      ],
-      houseEdge: '2.7%',
-      maxMultiplier: '3x',
-      description: 'Low risk offers more frequent but smaller wins. It\'s ideal for beginners or those who prefer consistent results over big wins.'
-    },
-    medium: {
-      segments: [
-        { multiplier: '0x', count: 4, color: '#e74c3c', probability: '40%' },
-        { multiplier: '1.5x', count: 2, color: '#27ae60', probability: '20%' },
-        { multiplier: '2x', count: 2, color: '#2980b9', probability: '20%' },
-        { multiplier: '5x', count: 1, color: '#f39c12', probability: '10%' },
-        { multiplier: '10x', count: 1, color: '#9b59b6', probability: '10%' }
-      ],
-      houseEdge: '3.5%',
-      maxMultiplier: '10x',
-      description: 'Medium risk balances win frequency with payout potential. It\'s suitable for players who have some experience and want a chance at bigger wins.'
-    },
-    high: {
-      segments: [
-        { multiplier: '0x', count: 7, color: '#e74c3c', probability: '70%' },
-        { multiplier: '3x', count: 1, color: '#27ae60', probability: '10%' },
-        { multiplier: '5x', count: 1, color: '#2980b9', probability: '10%' },
-        { multiplier: '20x', count: 0.5, color: '#f39c12', probability: '5%' },
-        { multiplier: '50x', count: 0.5, color: '#9b59b6', probability: '5%' }
-      ],
-      houseEdge: '4.5%',
-      maxMultiplier: '50x',
-      description: 'High risk has less frequent wins but offers the biggest potential payouts. It\'s for experienced players who are comfortable with volatility.'
-    }
+  // Probability data based on Stake.com's wheel
+  const probabilityData = {
+    lowRisk: [
+      {
+        type: 'Low Risk - 0x',
+        probability: 25.0,
+        multiplier: '0.0x',
+        color: '#e74c3c',
+        segments: [10, 20, 30, 40, 50]
+      },
+      {
+        type: 'Low Risk - 1.2x',
+        probability: 50.0,
+        multiplier: '1.2x',
+        color: '#27ae60',
+        segments: [10, 20, 30, 40, 50]
+      },
+      {
+        type: 'Low Risk - 1.5x',
+        probability: 25.0,
+        multiplier: '1.5x',
+        color: '#2980b9',
+        segments: [10, 20, 30, 40, 50]
+      }
+    ],
+    mediumRisk: [
+      {
+        type: 'Medium Risk - 0x',
+        probability: 50.0,
+        multiplier: '0.0x',
+        color: '#e74c3c',
+        segments: [10, 20, 30, 40, 50]
+      },
+      {
+        type: 'Medium Risk - 1.5x',
+        probability: 20.0,
+        multiplier: '1.5x',
+        color: '#27ae60',
+        segments: [10, 20, 30, 40, 50]
+      },
+      {
+        type: 'Medium Risk - 2.0x',
+        probability: 15.0,
+        multiplier: '2.0x',
+        color: '#2980b9',
+        segments: [10, 20, 30, 40, 50]
+      },
+      {
+        type: 'Medium Risk - 3.0x',
+        probability: 10.0,
+        multiplier: '3.0x',
+        color: '#f39c12',
+        segments: [10, 20]
+      },
+      {
+        type: 'Medium Risk - 4.0x',
+        probability: 5.0,
+        multiplier: '4.0x',
+        color: '#9b59b6',
+        segments: [30]
+      },
+      {
+        type: 'Medium Risk - 5.0x',
+        probability: 5.0,
+        multiplier: '5.0x',
+        color: '#8e44ad',
+        segments: [50]
+      }
+    ],
+    highRisk: [
+      {
+        type: 'High Risk - 0x',
+        probability: 90.0,
+        multiplier: '0.0x',
+        color: '#e74c3c',
+        segments: [10, 20, 30, 40, 50]
+      },
+      {
+        type: 'High Risk - 9.9x',
+        probability: 10.0,
+        multiplier: '9.9x',
+        color: '#27ae60',
+        segments: [10]
+      },
+      {
+        type: 'High Risk - 19.8x',
+        probability: 10.0,
+        multiplier: '19.8x',
+        color: '#2980b9',
+        segments: [20]
+      },
+      {
+        type: 'High Risk - 29.7x',
+        probability: 10.0,
+        multiplier: '29.7x',
+        color: '#f39c12',
+        segments: [30]
+      },
+      {
+        type: 'High Risk - 39.6x',
+        probability: 10.0,
+        multiplier: '39.6x',
+        color: '#9b59b6',
+        segments: [40]
+      },
+      {
+        type: 'High Risk - 49.5x',
+        probability: 10.0,
+        multiplier: '49.5x',
+        color: '#8e44ad',
+        segments: [50]
+      }
+    ]
   };
 
+  // Combine all risk levels and filter by selected segment count
+  const getAllProbabilityData = () => {
+    const allData = [
+      ...probabilityData.lowRisk.filter(item => item.segments.includes(selectedSegments)),
+      ...probabilityData.mediumRisk.filter(item => item.segments.includes(selectedSegments)),
+      ...probabilityData.highRisk.filter(item => item.segments.includes(selectedSegments))
+    ];
+    
+    return allData;
+  };
+
+  const sortedData = [...getAllProbabilityData()].sort((a, b) => {
+    if (sortBy === 'probability') {
+      return b.probability - a.probability;
+    } else {
+      // Sort by multiplier (extract the number before the 'x')
+      const multA = parseFloat(a.multiplier);
+      const multB = parseFloat(b.multiplier);
+      return multB - multA;
+    }
+  });
+
   return (
-    <div id="probability" className="my-16 px-4 md:px-8 lg:px-20 scroll-mt-24">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        viewport={{ once: true }}
+    <Paper
+      elevation={5}
+      sx={{
+        p: { xs: 2, md: 3 },
+        borderRadius: 3,
+        background: 'linear-gradient(135deg, rgba(9, 0, 5, 0.9) 0%, rgba(25, 5, 30, 0.85) 100%)',
+        backdropFilter: 'blur(15px)',
+        border: '1px solid rgba(216, 38, 51, 0.2)',
+        mb: 5,
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+        height: '100%',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '5px',
+          background: 'linear-gradient(90deg, #D82633, #14D854)',
+        }
+      }}
+    >
+      <Typography 
+        variant="h5" 
+        fontWeight="bold" 
+        gutterBottom
+        sx={{ 
+          borderBottom: '1px solid rgba(216, 38, 51, 0.3)',
+          pb: 1.5,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          color: 'white',
+          textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+        }}
       >
-        <h2 className="text-2xl md:text-3xl font-bold font-display mb-6 bg-gradient-to-r from-red-300 to-amber-300 bg-clip-text text-transparent">
+        <FaChartPie color="#D82633" size={22} />
+        <span style={{ background: 'linear-gradient(90deg, #FFFFFF, #D82633)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           Win Probabilities
-        </h2>
+        </span>
+      </Typography>
+      
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography 
+          variant="body2" 
+          color="rgba(255,255,255,0.7)"
+        >
+          Win chances across different risk levels with {selectedSegments} segments
+        </Typography>
         
-        <div className="bg-gradient-to-br from-blue-900/20 to-blue-800/5 rounded-xl border border-blue-800/20 shadow-lg shadow-blue-900/10 overflow-hidden">
-          <div className="flex border-b border-blue-800/20">
-            <button 
-              className={`flex-1 py-3 px-4 text-center font-medium transition-all duration-300 ${selectedRisk === 'low' ? 'bg-blue-900/30 text-white' : 'text-white/70 hover:bg-blue-900/20'}`}
-              onClick={() => setSelectedRisk('low')}
+        <Stack 
+          direction="row" 
+          spacing={1}
+          sx={{
+            backgroundColor: 'rgba(0,0,0,0.2)',
+            borderRadius: '20px',
+            padding: '2px',
+            border: '1px solid rgba(216, 38, 51, 0.2)'
+          }}
+        >
+          <Button 
+            size="small" 
+            onClick={() => setSortBy('probability')}
+            sx={{ 
+              fontSize: '0.75rem', 
+              color: sortBy === 'probability' ? 'white' : 'rgba(255,255,255,0.6)',
+              backgroundColor: sortBy === 'probability' ? 'rgba(216, 38, 51, 0.3)' : 'transparent',
+              borderRadius: '18px',
+              minWidth: 'auto',
+              p: 0.5,
+              px: 1.5,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: sortBy === 'probability' ? 'rgba(216, 38, 51, 0.4)' : 'rgba(216, 38, 51, 0.1)',
+              }
+            }}
+          >
+            By Chance
+          </Button>
+          <Button 
+            size="small" 
+            onClick={() => setSortBy('multiplier')}
+            sx={{ 
+              fontSize: '0.75rem', 
+              color: sortBy === 'multiplier' ? 'white' : 'rgba(255,255,255,0.6)',
+              backgroundColor: sortBy === 'multiplier' ? 'rgba(216, 38, 51, 0.3)' : 'transparent',
+              borderRadius: '18px',
+              minWidth: 'auto',
+              p: 0.5,
+              px: 1.5,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: sortBy === 'multiplier' ? 'rgba(216, 38, 51, 0.4)' : 'rgba(216, 38, 51, 0.1)',
+              }
+            }}
+          >
+            By Multiplier
+          </Button>
+        </Stack>
+      </Box>
+      
+      {/* Segment selector */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="body2" color="rgba(255,255,255,0.7)" sx={{ mb: 1 }}>
+          Select number of segments:
+        </Typography>
+        <Stack 
+          direction="row" 
+          spacing={1}
+          sx={{
+            backgroundColor: 'rgba(0,0,0,0.2)',
+            borderRadius: '20px',
+            padding: '2px',
+            border: '1px solid rgba(216, 38, 51, 0.2)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap'
+          }}
+        >
+          {[10, 20, 30, 40, 50].map(segments => (
+            <Button 
+              key={segments}
+              size="small" 
+              onClick={() => setSelectedSegments(segments)}
+              sx={{ 
+                fontSize: '0.75rem', 
+                color: selectedSegments === segments ? 'white' : 'rgba(255,255,255,0.6)',
+                backgroundColor: selectedSegments === segments ? 'rgba(216, 38, 51, 0.3)' : 'transparent',
+                borderRadius: '18px',
+                minWidth: 'auto',
+                p: 0.5,
+                px: 1.5,
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  backgroundColor: selectedSegments === segments ? 'rgba(216, 38, 51, 0.4)' : 'rgba(216, 38, 51, 0.1)',
+                }
+              }}
             >
-              Low Risk
-            </button>
-            <button 
-              className={`flex-1 py-3 px-4 text-center font-medium transition-all duration-300 ${selectedRisk === 'medium' ? 'bg-blue-900/30 text-white' : 'text-white/70 hover:bg-blue-900/20'}`}
-              onClick={() => setSelectedRisk('medium')}
-            >
-              Medium Risk
-            </button>
-            <button 
-              className={`flex-1 py-3 px-4 text-center font-medium transition-all duration-300 ${selectedRisk === 'high' ? 'bg-blue-900/30 text-white' : 'text-white/70 hover:bg-blue-900/20'}`}
-              onClick={() => setSelectedRisk('high')}
-            >
-              High Risk
-            </button>
-          </div>
-          
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <div className="flex items-center mb-4">
-                  <div className="w-10 h-10 rounded-full bg-blue-900/30 flex items-center justify-center mr-3">
-                    <FaChartPie className="text-blue-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white">{selectedRisk.charAt(0).toUpperCase() + selectedRisk.slice(1)} Risk Wheel</h3>
-                </div>
+              {segments}
+            </Button>
+          ))}
+        </Stack>
+      </Box>
+      
+      <Grid container spacing={2}>
+        {sortedData.map((item, index) => (
+          <Fade 
+            in={true} 
+            key={item.type}
+            style={{ 
+              transformOrigin: '0 0 0',
+              transitionDelay: `${index * 50}ms`
+            }}
+          >
+            <Grid xs={12} sm={6} md={4}>
+              <Box 
+                sx={{ 
+                  p: 2, 
+                  borderRadius: 2, 
+                  background: `linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(${parseInt(item.color.slice(1, 3), 16)}, ${parseInt(item.color.slice(3, 5), 16)}, ${parseInt(item.color.slice(5, 7), 16)}, 0.05) 100%)`,
+                  border: `1px solid ${item.color}40`,
+                  transition: 'all 0.3s ease',
+                  position: 'relative',
+                  height: '100%',
+                  overflow: 'hidden',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: `0 5px 15px rgba(0, 0, 0, 0.3), 0 0 10px ${item.color}30`,
+                    borderColor: `${item.color}60`,
+                    '& .hover-arrow': {
+                      opacity: 1,
+                      transform: 'translateX(0)'
+                    }
+                  },
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '3px',
+                    height: '100%',
+                    backgroundColor: item.color,
+                    boxShadow: `0 0 10px ${item.color}`
+                  }
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                  <Box>
+                    <Typography 
+                      variant="subtitle1" 
+                      fontWeight="bold" 
+                      color="white"
+                      sx={{ mb: 0.5 }}
+                    >
+                      {item.type}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      color="rgba(255,255,255,0.7)" 
+                      sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 0.5 
+                      }}
+                    >
+                      <span style={{ color: item.color, fontWeight: 'bold' }}>{item.multiplier}</span>
+                      multiplier
+                    </Typography>
+                  </Box>
+                  <Tooltip 
+                    title={
+                      <Box>
+                        <Typography variant="body2">
+                          {item.type.includes('Low Risk') && 'Lower risk offers more frequent but smaller wins with max 1.5x multiplier.'}
+                          {item.type.includes('Medium Risk') && 'Medium risk balances win frequency with payout size up to 5.0x multiplier.'}
+                          {item.type.includes('High Risk') && `High risk has less frequent wins but larger potential payouts up to ${selectedSegments === 50 ? '49.5x' : selectedSegments === 40 ? '39.6x' : selectedSegments === 30 ? '29.7x' : selectedSegments === 20 ? '19.8x' : '9.9x'} multiplier.`}
+                        </Typography>
+                      </Box>
+                    }
+                    arrow
+                    placement="top"
+                  >
+                    <Box sx={{ 
+                      cursor: 'help',
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'rgba(0,0,0,0.2)',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        backgroundColor: 'rgba(216, 38, 51, 0.2)',
+                      }
+                    }}>
+                      <FaInfoCircle color="rgba(255,255,255,0.6)" size={14} />
+                    </Box>
+                  </Tooltip>
+                </Box>
                 
-                <p className="text-white/70 mb-6">{riskData[selectedRisk].description}</p>
-                
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="bg-black/20 rounded-lg p-3 border border-blue-800/10">
-                    <div className="text-xs text-white/50 mb-1">House Edge</div>
-                    <div className="text-xl font-bold text-white flex items-center">
-                      {riskData[selectedRisk].houseEdge}
-                      <FaPercent className="ml-1 text-blue-400 text-sm" />
-                    </div>
-                  </div>
+                <Box sx={{ position: 'relative', mt: 2, mb: 1 }}>
+                  <Box 
+                    sx={{ 
+                      height: '12px', 
+                      width: '100%', 
+                      backgroundColor: 'rgba(0,0,0,0.3)',
+                      borderRadius: '6px',
+                      overflow: 'hidden',
+                      boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)'
+                    }}
+                  >
+                    <Box 
+                      sx={{ 
+                        height: '100%', 
+                        width: `${item.probability}%`, 
+                        background: `linear-gradient(90deg, ${item.color}cc, ${item.color})`,
+                        borderRadius: '6px',
+                        position: 'relative',
+                        boxShadow: `0 0 10px ${item.color}80`,
+                        transition: 'width 1s cubic-bezier(0.65, 0, 0.35, 1)',
+                        '&::after': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          background: 'linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)',
+                        }
+                      }}
+                    />
+                  </Box>
                   
-                  <div className="bg-black/20 rounded-lg p-3 border border-blue-800/10">
-                    <div className="text-xs text-white/50 mb-1">Max Multiplier</div>
-                    <div className="text-xl font-bold text-white">{riskData[selectedRisk].maxMultiplier}</div>
-                  </div>
-                </div>
-                
-                <div className="bg-black/20 rounded-lg p-4 border border-blue-800/10">
-                  <div className="flex items-center mb-3">
-                    <FaInfoCircle className="text-blue-400 mr-2" />
-                    <h4 className="font-medium text-white">Understanding Win Probability</h4>
-                  </div>
-                  <p className="text-white/70 text-sm">
-                    The wheel is divided into segments, each with a specific multiplier. The probability of landing on any segment depends on its size relative to the whole wheel. Higher multipliers have smaller segments, making them less likely to hit.
-                  </p>
-                </div>
-              </div>
-              
-              <div>
-                <div className="bg-black/30 rounded-xl p-4 border border-blue-800/10 h-full">
-                  <h4 className="font-medium text-white mb-3 flex items-center">
-                    <FaChartBar className="text-blue-400 mr-2" />
-                    Segment Distribution
-                  </h4>
-                  
-                  <div className="space-y-4">
-                    {riskData[selectedRisk].segments.map((segment, index) => (
-                      <div key={index}>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-white">{segment.multiplier}</span>
-                          <span className="text-white/70">{segment.probability}</span>
-                        </div>
-                        <div className="w-full h-6 bg-black/30 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full rounded-full"
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box 
+                        sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(0,0,0,0.2)',
+                          border: `1px solid ${item.color}80`
+                        }}
+                      >
+                        <FaPercentage color={item.color} size={16} />
+                      </Box>
+                      <Typography 
+                        variant="h6" 
+                        fontWeight="bold" 
+                        color="white"
+                        sx={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}
+                      >
+                        {item.probability}%
+                      </Typography>
+                    </Box>
+                    
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      {item.probability > 30 && <FaThumbsUp color="#14D854" />}
+                      {item.probability > 10 && item.probability <= 30 && <FaThumbsUp color="#FFA500" />}
+                      {item.probability <= 10 && <FaQuestion color="#d82633" />}
+                      
+                      <Typography 
+                        variant="body2" 
+                        fontWeight="medium"
+                        color={item.probability > 30 ? '#14D854' : item.probability > 10 ? '#FFA500' : '#d82633'}
+                      >
+                        {item.probability > 30 && 'Common'}
+                        {item.probability > 10 && item.probability <= 30 && 'Medium'}
+                        {item.probability <= 10 && 'Rare'}
+                      </Typography>
+                    </Box>
+                    
+                    <FaChevronRight 
+                      className="hover-arrow" 
+                      color="rgba(255,255,255,0.4)" 
+                      size={14} 
                             style={{ 
-                              width: segment.probability,
-                              backgroundColor: segment.color,
-                              transition: 'width 0.5s ease-out'
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="mt-4 pt-4 border-t border-blue-800/10">
-                    <div className="flex justify-between text-xs text-white/70">
-                      <span>Win Chance: {100 - parseInt(riskData[selectedRisk].segments[0].probability)}%</span>
-                      <span>Loss Chance: {riskData[selectedRisk].segments[0].probability}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-6 p-3 bg-blue-900/20 rounded-lg border border-blue-800/10 text-sm text-white/70">
-              <p>
-                <span className="font-medium text-blue-300">Note:</span> All results are generated using a provably fair algorithm. Each spin is completely random and independent of previous spins.
-              </p>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    </div>
+                        opacity: 0, 
+                        transform: 'translateX(-10px)',
+                        transition: 'all 0.3s ease'
+                      }} 
+                    />
+                  </Box>
+                </Box>
+              </Box>
+            </Grid>
+          </Fade>
+        ))}
+      </Grid>
+      
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1.5, 
+          mt: 3, 
+          p: 2, 
+          borderRadius: 2,
+          background: 'linear-gradient(135deg, rgba(216, 38, 51, 0.05) 0%, rgba(216, 38, 51, 0.15) 100%)',
+          border: '1px solid rgba(216, 38, 51, 0.15)',
+          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)'
+        }}
+      >
+        <FaInfoCircle color="#D82633" style={{ flexShrink: 0 }} />
+        <Typography variant="body2" color="rgba(255,255,255,0.8)">
+          More segments = higher potential multipliers. High risk with 50 segments offers up to 49.5x multiplier!
+        </Typography>
+      </Box>
+    </Paper>
   );
 };
 

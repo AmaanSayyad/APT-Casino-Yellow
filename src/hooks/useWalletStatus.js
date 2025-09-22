@@ -40,7 +40,7 @@ export function WalletStatusProvider({ children }) {
       setDevWallet({
         isConnected: true,
         address: '0x1234...dev',
-        chain: { id: 'ethereum_testnet', name: 'Ethereum Testnet' },
+        chain: { id: 'arbitrum_testnet', name: 'Arbitrum Sepolia' },
       });
     }
 
@@ -56,7 +56,7 @@ export function WalletStatusProvider({ children }) {
           ? {
               isConnected: true,
               address: '0x1234...dev',
-              chain: { id: 'ethereum_testnet', name: 'Ethereum Testnet' },
+              chain: { id: 'arbitrum_testnet', name: 'Arbitrum Sepolia' },
             }
           : {
               isConnected: false,
@@ -78,7 +78,7 @@ export function WalletStatusProvider({ children }) {
       setDevWallet({
         isConnected: true,
         address: '0x1234...dev',
-        chain: { id: 'ethereum_testnet', name: 'Ethereum Testnet' },
+        chain: { id: 'arbitrum_testnet', name: 'Arbitrum Sepolia' },
       });
       return;
     }
@@ -134,7 +134,7 @@ export function WalletStatusProvider({ children }) {
   });
 
   useEffect(() => {
-    console.log('🔌 Ethereum Wallet connection changed:');
+    console.log('🔌 Arbitrum Wallet connection changed:');
     console.log('=== CURRENT STATUS ===');
     console.log('Connected:', currentStatus.isConnected);
     console.log('Address:', currentStatus.address);

@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, Avatar, Chip, Button, LinearProgress, Grid } from '@mui/material';
+import { Box, Typography, Paper, Avatar, Chip, Button, LinearProgress } from '@mui/material';
 import { FaTv, FaUsers, FaCoins, FaPlay, FaVolumeUp } from 'react-icons/fa';
+import Grid from "@mui/material/Unstable_Grid2";
 
 // Sample data - would come from API in real application
 const liveGamesData = [

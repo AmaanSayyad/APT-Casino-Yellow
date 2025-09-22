@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { FaHistory, FaFilter, FaDownload, FaSearch, FaTrophy, FaChartLine } from "react-icons/fa";
+import React, { useState } from "react";
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, InputAdornment, Select, MenuItem, FormControl, Chip, Pagination, Divider, Fade } from "@mui/material";
+import { FaHistory, FaFilter, FaDownload, FaSearch, FaTrophy, FaChartLine, FaExternalLinkAlt, FaCheck } from "react-icons/fa";
 import Image from "next/image";
 import coin from "../../../../../public/coin.png";
 
@@ -10,12 +10,22 @@ const WheelHistory = ({ gameHistory = [] }) => {
   const [activeTab, setActiveTab] = useState("all");
   const [entriesShown, setEntriesShown] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
 
-  // Open Etherscan link for transaction hash
-  const openEtherscan = (hash) => {
+   // Open Arbiscan link for transaction hash
+   const openArbiscan = (hash) => {
     if (hash && hash !== 'unknown') {
-      const network = process.env.NEXT_PUBLIC_NETWORK || 'sepolia';
-      const explorerUrl = `https://${network}.etherscan.io/tx/${hash}`;
+      const network = process.env.NEXT_PUBLIC_NETWORK || 'arbitrum-sepolia';
+      let explorerUrl;
+      
+      if (network === 'arbitrum-sepolia') {
+        explorerUrl = `https://sepolia.arbiscan.io/tx/${hash}`;
+      } else if (network === 'arbitrum-one') {
+        explorerUrl = `https://arbiscan.io/tx/${hash}`;
+      } else {
+        explorerUrl = `https://sepolia.etherscan.io/tx/${hash}`;
+      }
+      
       window.open(explorerUrl, '_blank');
     }
   };
@@ -40,205 +50,640 @@ const WheelHistory = ({ gameHistory = [] }) => {
   const totalVolume = historyData.reduce((sum, item) => sum + (parseFloat(item.betAmount) || 0), 0);
   const biggestWin = historyData.length > 0 ? Math.max(...historyData.map(item => parseFloat(item.payout) || 0)) : 0;
   
+  // Pagination
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+  
+  const paginatedHistory = filteredHistory.slice((page - 1) * entriesShown, page * entriesShown);
+  const totalPages = Math.ceil(filteredHistory.length / entriesShown);
+  
   return (
-    <div id="history" className="my-16 px-4 md:px-8 lg:px-20 scroll-mt-24">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        viewport={{ once: true }}
+    <Paper
+      elevation={5}
+      sx={{
+        p: { xs: 2, md: 3 },
+        borderRadius: 3,
+        background: 'linear-gradient(135deg, rgba(9, 0, 5, 0.9) 0%, rgba(25, 5, 30, 0.85) 100%)',
+        backdropFilter: 'blur(15px)',
+        border: '1px solid rgba(104, 29, 219, 0.2)',
+        mb: 5,
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+        height: '100%',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '5px',
+          background: 'linear-gradient(90deg, #681DDB, #14D854)',
+        }
+      }}
+    >
+      <Typography 
+        variant="h5" 
+        fontWeight="bold" 
+        gutterBottom
+        sx={{ 
+          borderBottom: '1px solid rgba(104, 29, 219, 0.3)',
+          pb: 1.5,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          color: 'white',
+          textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+        }}
       >
-        <h2 className="text-2xl md:text-3xl font-bold font-display mb-6 bg-gradient-to-r from-red-300 to-amber-300 bg-clip-text text-transparent">
+        <FaHistory color="#681DDB" size={22} />
+        <span style={{ background: 'linear-gradient(90deg, #FFFFFF, #681DDB)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           Game History
-        </h2>
+        </span>
+      </Typography>
+      
+      <Typography 
+        variant="body2" 
+        color="rgba(255,255,255,0.7)"
+        sx={{ mb: 3 }}
+      >
+        Recent game results and statistics
+      </Typography>
+
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', md: 'row' }, 
+        justifyContent: 'space-between',
+        alignItems: { xs: 'stretch', md: 'center' },
+        mb: 3,
+        gap: 2
+      }}>
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, 
+          gap: 2,
+          width: '100%'
+        }}>
+          <Box 
+            sx={{ 
+              p: 2, 
+              borderRadius: 2, 
+              backgroundColor: 'rgba(104, 29, 219, 0.1)', 
+              border: '1px solid rgba(104, 29, 219, 0.2)',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <Typography variant="caption" color="rgba(255,255,255,0.5)" sx={{ mb: 0.5 }}>
+              Total Bets
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="h6" fontWeight="bold" color="white">
+                {totalBets}
+              </Typography>
+              <FaChartLine color="rgba(104, 29, 219, 0.8)" />
+            </Box>
+          </Box>
+          
+          <Box 
+            sx={{ 
+              p: 2, 
+              borderRadius: 2, 
+              backgroundColor: 'rgba(255, 165, 0, 0.1)', 
+              border: '1px solid rgba(255, 165, 0, 0.2)',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <Typography variant="caption" color="rgba(255,255,255,0.5)" sx={{ mb: 0.5 }}>
+              Total Volume
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="h6" fontWeight="bold" color="white" sx={{ 
+                maxWidth: '80%',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}>
+                {totalVolume.toFixed(5)} ETH
+              </Typography>
+              <Box 
+                sx={{ 
+                  width: 24, 
+                  height: 24, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center' 
+                }}
+              >
+                <Image src={coin} width={20} height={20} alt="coin" />
+              </Box>
+            </Box>
+          </Box>
+          
+          <Box 
+            sx={{ 
+              p: 2, 
+              borderRadius: 2, 
+              backgroundColor: 'rgba(20, 216, 84, 0.1)', 
+              border: '1px solid rgba(20, 216, 84, 0.2)',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <Typography variant="caption" color="rgba(255,255,255,0.5)" sx={{ mb: 0.5 }}>
+              Biggest Win
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="h6" fontWeight="bold" color="white" sx={{ 
+                maxWidth: '80%',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}>
+                {biggestWin.toFixed(5)} ETH
+              </Typography>
+              <FaTrophy color="#FFA500" />
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+      
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', md: 'row' }, 
+        justifyContent: 'space-between',
+        alignItems: { xs: 'stretch', md: 'center' },
+        mb: 3,
+        gap: 2
+      }}>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 1,
+          borderBottom: '1px solid rgba(104, 29, 219, 0.2)',
+          width: { xs: '100%', md: 'auto' }
+        }}>
+          <Button 
+            variant={activeTab === 'all' ? 'contained' : 'text'}
+            onClick={() => setActiveTab('all')}
+            sx={{ 
+              borderRadius: '4px 4px 0 0',
+              backgroundColor: activeTab === 'all' ? 'rgba(104, 29, 219, 0.3)' : 'transparent',
+              color: activeTab === 'all' ? 'white' : 'rgba(255,255,255,0.7)',
+              '&:hover': {
+                backgroundColor: activeTab === 'all' ? 'rgba(104, 29, 219, 0.4)' : 'rgba(104, 29, 219, 0.1)',
+              },
+              borderBottom: activeTab === 'all' ? '2px solid #681DDB' : 'none',
+              boxShadow: 'none',
+              minWidth: '80px'
+            }}
+          >
+            All Spins
+          </Button>
+          <Button 
+            variant={activeTab === 'high-risk' ? 'contained' : 'text'}
+            onClick={() => setActiveTab('high-risk')}
+            sx={{ 
+              borderRadius: '4px 4px 0 0',
+              backgroundColor: activeTab === 'high-risk' ? 'rgba(104, 29, 219, 0.3)' : 'transparent',
+              color: activeTab === 'high-risk' ? 'white' : 'rgba(255,255,255,0.7)',
+              '&:hover': {
+                backgroundColor: activeTab === 'high-risk' ? 'rgba(104, 29, 219, 0.4)' : 'rgba(104, 29, 219, 0.1)',
+              },
+              borderBottom: activeTab === 'high-risk' ? '2px solid #681DDB' : 'none',
+              boxShadow: 'none',
+              minWidth: '80px'
+            }}
+          >
+            High Risk
+          </Button>
+          <Button 
+            variant={activeTab === 'big-wins' ? 'contained' : 'text'}
+            onClick={() => setActiveTab('big-wins')}
+            sx={{ 
+              borderRadius: '4px 4px 0 0',
+              backgroundColor: activeTab === 'big-wins' ? 'rgba(104, 29, 219, 0.3)' : 'transparent',
+              color: activeTab === 'big-wins' ? 'white' : 'rgba(255,255,255,0.7)',
+              '&:hover': {
+                backgroundColor: activeTab === 'big-wins' ? 'rgba(104, 29, 219, 0.4)' : 'rgba(104, 29, 219, 0.1)',
+              },
+              borderBottom: activeTab === 'big-wins' ? '2px solid #681DDB' : 'none',
+              boxShadow: 'none',
+              minWidth: '80px'
+            }}
+          >
+            Big Wins
+          </Button>
+        </Box>
         
-        <div className="bg-gradient-to-br from-purple-900/20 to-purple-800/5 rounded-xl border border-purple-800/20 shadow-lg shadow-purple-900/10 overflow-hidden">
-          <div className="p-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-purple-900/30 flex items-center justify-center mr-3">
-                  <FaHistory className="text-purple-400" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Recent Spins</h3>
-                  <p className="text-white/70 text-sm">View recent game results and player statistics</p>
-                </div>
-              </div>
-              
-              <div className="flex flex-col md:flex-row gap-3">
-                <div className="relative">
-                  <input
-                    type="text"
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 2,
+          flexWrap: { xs: 'wrap', md: 'nowrap' }
+        }}>
+          <TextField
                     placeholder="Search history..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-black/30 border border-purple-800/20 rounded-lg py-2 pl-10 pr-4 text-white placeholder:text-white/50 w-full md:w-auto"
-                  />
-                  <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50" />
-                </div>
-                
-                <select 
-                  className="bg-black/30 border border-purple-800/20 rounded-lg py-2 px-3 text-white"
+            size="small"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <FaSearch color="rgba(255,255,255,0.5)" />
+                </InputAdornment>
+              ),
+              sx: {
+                color: 'white',
+                backgroundColor: 'rgba(0,0,0,0.2)',
+                borderRadius: 1,
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(104, 29, 219, 0.2)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(104, 29, 219, 0.3)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(104, 29, 219, 0.5)',
+                },
+                '&::placeholder': {
+                  color: 'rgba(255,255,255,0.5)',
+                  opacity: 1,
+                },
+              }
+            }}
+            sx={{ 
+              minWidth: { xs: '100%', md: '200px' },
+              '& .MuiInputBase-input::placeholder': {
+                color: 'rgba(255,255,255,0.5)',
+                opacity: 1,
+              },
+            }}
+          />
+          
+          <FormControl 
+            size="small" 
+            sx={{ 
+              minWidth: { xs: '100%', md: '120px' },
+            }}
+          >
+            <Select
                   value={entriesShown}
                   onChange={(e) => setEntriesShown(Number(e.target.value))}
-                >
-                  <option value={10}>Show 10</option>
-                  <option value={20}>Show 20</option>
-                  <option value={50}>Show 50</option>
-                </select>
-                
-                <button className="flex items-center justify-center bg-gradient-to-r from-purple-800/40 to-purple-900/20 rounded-lg py-2 px-4 text-white hover:from-purple-700/40 hover:to-purple-800/20 transition-all duration-300">
-                  <FaDownload className="mr-2" />
+              sx={{
+                color: 'white',
+                backgroundColor: 'rgba(0,0,0,0.2)',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(104, 29, 219, 0.2)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(104, 29, 219, 0.3)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(104, 29, 219, 0.5)',
+                },
+                '& .MuiSelect-icon': {
+                  color: 'rgba(255,255,255,0.5)',
+                },
+              }}
+            >
+              <MenuItem value={10}>Show 10</MenuItem>
+              <MenuItem value={20}>Show 20</MenuItem>
+              <MenuItem value={50}>Show 50</MenuItem>
+            </Select>
+          </FormControl>
+          
+          <Button 
+            variant="contained"
+            startIcon={<FaDownload />}
+            sx={{ 
+              backgroundColor: 'rgba(104, 29, 219, 0.3)',
+              '&:hover': {
+                backgroundColor: 'rgba(104, 29, 219, 0.5)',
+              },
+              minWidth: { xs: '100%', md: 'auto' },
+            }}
+          >
                   Export
-                </button>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              <div className="bg-black/20 rounded-lg p-3 border border-purple-800/10">
-                <div className="text-xs text-white/50 mb-1">Total Bets</div>
-                <div className="text-xl font-bold text-white flex items-center">
-                  {totalBets}
-                  <FaChartLine className="ml-2 text-purple-400 text-sm" />
-                </div>
-              </div>
-              
-              <div className="bg-black/20 rounded-lg p-3 border border-purple-800/10">
-                <div className="text-xs text-white/50 mb-1">Total Volume</div>
-                <div className="text-xl font-bold text-white flex items-center">
-                  <span className="truncate max-w-[120px]" title={`${totalVolume} ETH`}>
-                    {totalVolume.toFixed(5)} ETH
-                  </span>
-                  <Image src={coin} width={20} height={20} alt="coin" className="ml-2 flex-shrink-0" />
-                </div>
-              </div>
-              
-              <div className="bg-black/20 rounded-lg p-3 border border-purple-800/10">
-                <div className="text-xs text-white/50 mb-1">Biggest Win</div>
-                <div className="text-xl font-bold text-white flex items-center">
-                  <span className="truncate max-w-[120px]" title={`${biggestWin} ETH`}>
-                    {biggestWin.toFixed(5)} ETH
-                  </span>
-                  <FaTrophy className="ml-2 text-yellow-400 text-sm flex-shrink-0" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex border-b border-purple-800/20 mb-4">
-              <button 
-                className={`py-3 px-4 text-center font-medium transition-all duration-300 ${activeTab === 'all' ? 'border-b-2 border-purple-500 text-white' : 'text-white/70 hover:text-white'}`}
-                onClick={() => setActiveTab('all')}
+          </Button>
+        </Box>
+      </Box>
+      
+      <TableContainer 
+        sx={{ 
+          backgroundColor: 'rgba(0,0,0,0.2)', 
+          borderRadius: 2,
+          border: '1px solid rgba(104, 29, 219, 0.2)',
+          mb: 3,
+          maxHeight: '500px',
+          overflowY: 'auto',
+          '&::-webkit-scrollbar': {
+            width: '8px',
+            height: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: 'rgba(0,0,0,0.1)',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'rgba(104, 29, 219, 0.3)',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: 'rgba(104, 29, 219, 0.5)',
+            },
+          },
+        }}
+      >
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell 
+                sx={{ 
+                  backgroundColor: 'rgba(0,0,0,0.4)',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  borderBottom: '1px solid rgba(104, 29, 219, 0.2)'
+                }}
               >
-                All Spins
-              </button>
-              <button 
-                className={`py-3 px-4 text-center font-medium transition-all duration-300 ${activeTab === 'high-risk' ? 'border-b-2 border-purple-500 text-white' : 'text-white/70 hover:text-white'}`}
-                onClick={() => setActiveTab('high-risk')}
+                Game
+              </TableCell>
+              <TableCell 
+                sx={{ 
+                  backgroundColor: 'rgba(0,0,0,0.4)',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  borderBottom: '1px solid rgba(104, 29, 219, 0.2)'
+                }}
               >
-                High Risk
-              </button>
-              <button 
-                className={`py-3 px-4 text-center font-medium transition-all duration-300 ${activeTab === 'big-wins' ? 'border-b-2 border-purple-500 text-white' : 'text-white/70 hover:text-white'}`}
-                onClick={() => setActiveTab('big-wins')}
+                Time
+              </TableCell>
+              <TableCell 
+                sx={{ 
+                  backgroundColor: 'rgba(0,0,0,0.4)',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  borderBottom: '1px solid rgba(104, 29, 219, 0.2)'
+                }}
               >
-                Big Wins
-              </button>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-white min-w-[600px]">
-                <thead>
-                  <tr className="bg-black/30 border-b border-purple-800/20">
-                    <th className="py-3 px-4 text-left">Game</th>
-                    <th className="py-3 px-4 text-left">Time</th>
-                    <th className="py-3 px-4 text-left">Bet Amount</th>
-                    <th className="py-3 px-4 text-left">Multiplier</th>
-                    <th className="py-3 px-4 text-left">Payout</th>
-                    <th className="py-3 px-4 text-left">Result</th>
-                    <th className="py-3 px-4 text-left">VRF Proof</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredHistory.slice(0, entriesShown).map((item, index) => (
-                    <tr key={item.id} className={`border-b border-purple-800/10 ${index % 2 === 0 ? 'bg-black/10' : ''} hover:bg-purple-900/10 transition-colors duration-150`}>
-                      <td className="py-3 px-4 font-medium">{item.game || 'Wheel'}</td>
-                      <td className="py-3 px-4">{item.time}</td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <span className="truncate max-w-[80px]" title={`${item.betAmount} ETH`}>
+                Bet Amount
+              </TableCell>
+              <TableCell 
+                sx={{ 
+                  backgroundColor: 'rgba(0,0,0,0.4)',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  borderBottom: '1px solid rgba(104, 29, 219, 0.2)'
+                }}
+              >
+                Multiplier
+              </TableCell>
+              <TableCell 
+                sx={{ 
+                  backgroundColor: 'rgba(0,0,0,0.4)',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  borderBottom: '1px solid rgba(104, 29, 219, 0.2)'
+                }}
+              >
+                Payout
+              </TableCell>
+              <TableCell 
+                sx={{ 
+                  backgroundColor: 'rgba(0,0,0,0.4)',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  borderBottom: '1px solid rgba(104, 29, 219, 0.2)'
+                }}
+              >
+                Result
+              </TableCell>
+              <TableCell 
+                sx={{ 
+                  backgroundColor: 'rgba(0,0,0,0.4)',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  borderBottom: '1px solid rgba(104, 29, 219, 0.2)'
+                }}
+              >
+                VRF Proof
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {paginatedHistory.map((item, index) => (
+              <Fade 
+                in={true} 
+                key={item.id}
+                style={{ 
+                  transformOrigin: '0 0 0',
+                  transitionDelay: `${index * 50}ms`
+                }}
+              >
+                <TableRow 
+                  sx={{ 
+                    '&:nth-of-type(odd)': { 
+                      backgroundColor: 'rgba(0,0,0,0.1)' 
+                    },
+                    '&:hover': { 
+                      backgroundColor: 'rgba(104, 29, 219, 0.1)' 
+                    },
+                    transition: 'background-color 0.2s'
+                  }}
+                >
+                  <TableCell 
+                    sx={{ 
+                      color: 'white',
+                      borderBottom: '1px solid rgba(104, 29, 219, 0.1)'
+                    }}
+                  >
+                    {item.game || 'Wheel'}
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      color: 'rgba(255,255,255,0.7)',
+                      borderBottom: '1px solid rgba(104, 29, 219, 0.1)'
+                    }}
+                  >
+                    {item.time}
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      borderBottom: '1px solid rgba(104, 29, 219, 0.1)'
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography 
+                        variant="body2" 
+                        color="rgba(255,255,255,0.7)"
+                        sx={{ 
+                          maxWidth: '80px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
                             {item.betAmount} ETH
-                          </span>
-                          <Image src={coin} width={16} height={16} alt="coin" className="ml-1 flex-shrink-0" />
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 font-medium">{item.multiplier}</td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <span className="truncate max-w-[80px]" title={`${item.payout} ETH`}>
+                      </Typography>
+                      <Image src={coin} width={16} height={16} alt="coin" />
+                    </Box>
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      color: 'white',
+                      fontWeight: 'medium',
+                      borderBottom: '1px solid rgba(104, 29, 219, 0.1)'
+                    }}
+                  >
+                    {item.multiplier}
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      borderBottom: '1px solid rgba(104, 29, 219, 0.1)'
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography 
+                        variant="body2" 
+                        color="#FFA500"
+                        fontWeight="medium"
+                        sx={{ 
+                          maxWidth: '80px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
                             {item.payout} ETH
-                          </span>
-                          <Image src={coin} width={16} height={16} alt="coin" className="ml-1 flex-shrink-0" />
-                        </div>
-                      </td>
-                      <td className={`py-3 px-4 font-medium ${item.payout > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      </Typography>
+                      <Image src={coin} width={16} height={16} alt="coin" />
+                    </Box>
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      color: item.payout > 0 ? '#14D854' : '#d82633',
+                      fontWeight: 'medium',
+                      borderBottom: '1px solid rgba(104, 29, 219, 0.1)'
+                    }}
+                  >
                         {item.payout > 0 ? `+${item.payout}` : '0'}
-                      </td>
-                      <td className="py-3 px-4">
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      borderBottom: '1px solid rgba(104, 29, 219, 0.1)'
+                    }}
+                  >
                         {item.vrfProof ? (
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-green-400 font-mono">
-                                {item.vrfProof.requestId ? 
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Chip 
+                            icon={<FaCheck size={10} />}
+                            label={item.vrfProof.requestId ? 
                                   `${item.vrfProof.requestId.slice(0, 6)}...${item.vrfProof.requestId.slice(-4)}` : 
                                   'N/A'
                                 }
-                              </span>
-                              <button
+                            size="small"
+                            sx={{ 
+                              backgroundColor: 'rgba(20, 216, 84, 0.1)',
+                              border: '1px solid rgba(20, 216, 84, 0.2)',
+                              color: '#14D854',
+                              fontSize: '0.7rem',
+                              height: 20,
+                              '& .MuiChip-icon': {
+                                color: '#14D854',
+                                fontSize: '0.7rem',
+                              }
+                            }}
+                          />
+                          <Button
                                 onClick={() => openEtherscan(item.vrfProof.transactionHash)}
-                                className="text-blue-400 hover:text-blue-300 text-xs underline cursor-pointer"
-                                title="View on Etherscan"
-                              >
-                                TX
-                              </button>
-                            </div>
-                            <div className="text-xs text-gray-400">
+                            size="small"
+                            startIcon={<FaExternalLinkAlt size={10} />}
+                            sx={{ 
+                              color: '#681DDB',
+                              fontSize: '0.7rem',
+                              minWidth: 'auto',
+                              p: 0,
+                              '&:hover': {
+                                backgroundColor: 'transparent',
+                                textDecoration: 'underline',
+                              }
+                            }}
+                          >
+                            TX
+                          </Button>
+                        </Box>
+                        <Typography variant="caption" color="rgba(255,255,255,0.5)">
                               Log: #{item.vrfProof.logIndex || 0}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-gray-500 text-xs">No proof</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Typography variant="caption" color="rgba(255,255,255,0.3)">
+                        No proof
+                      </Typography>
+                    )}
+                  </TableCell>
+                </TableRow>
+              </Fade>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
             
             {filteredHistory.length === 0 && (
-              <div className="py-8 text-center text-white/50">
-                No matching results found. Try adjusting your search or filter.
-              </div>
-            )}
-            
-            <div className="mt-6 flex justify-between items-center">
-              <div className="text-sm text-white/50">
+        <Box 
+          sx={{ 
+            py: 4, 
+            textAlign: 'center', 
+            backgroundColor: 'rgba(0,0,0,0.2)',
+            borderRadius: 2,
+            border: '1px solid rgba(104, 29, 219, 0.2)',
+            mb: 3
+          }}
+        >
+          <Typography color="rgba(255,255,255,0.5)">
+            No results found. Try different filters.
+          </Typography>
+        </Box>
+      )}
+      
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 2
+      }}>
+        <Typography variant="body2" color="rgba(255,255,255,0.5)">
                 Showing {Math.min(entriesShown, filteredHistory.length)} of {filteredHistory.length} results
-              </div>
-              
-              <div className="flex items-center">
-                <button className="px-3 py-1 bg-black/30 border border-purple-800/20 rounded-l-lg text-white/70 hover:text-white transition-colors disabled:opacity-50" disabled>
-                  Previous
-                </button>
-                <button className="px-3 py-1 bg-black/30 border border-purple-800/20 border-l-0 rounded-r-lg text-white/70 hover:text-white transition-colors">
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    </div>
+        </Typography>
+        
+        {totalPages > 1 && (
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={handleChangePage}
+            variant="outlined"
+            shape="rounded"
+            sx={{
+              '& .MuiPaginationItem-root': {
+                color: 'rgba(255,255,255,0.7)',
+                borderColor: 'rgba(104, 29, 219, 0.2)',
+                '&.Mui-selected': {
+                  backgroundColor: 'rgba(104, 29, 219, 0.3)',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'rgba(104, 29, 219, 0.4)',
+                  },
+                },
+                '&:hover': {
+                  backgroundColor: 'rgba(104, 29, 219, 0.1)',
+                },
+              },
+            }}
+          />
+        )}
+      </Box>
+    </Paper>
   );
 };
 

@@ -17,6 +17,7 @@ import { useNotification } from '@/components/NotificationSystem';
 import useWalletStatus from '@/hooks/useWalletStatus';
 import vrfProofService from '@/services/VRFProofService';
 import VRFProofRequiredModal from '@/components/VRF/VRFProofRequiredModal';
+import vrfLogger from '@/services/VRFLoggingService';
 
 // Import new components
 import WheelVideo from "./components/WheelVideo";
@@ -59,13 +60,13 @@ export default function Home() {
     if (isInitialized.current) return; // Prevent multiple executions
     
     const savedBalance = loadBalanceFromStorage();
-    if (savedBalance && savedBalance !== "0") {
+    if (savedBalance) {
       console.log('Loading saved balance from localStorage:', savedBalance);
       dispatch(setBalance(savedBalance));
     } else {
-      // Set initial balance to 1 ETH for demo purposes
-      console.log('No saved balance, setting to 1 ETH for demo');
-      dispatch(setBalance("1.00000"));
+      // Initialize with zero balance
+      console.log('No saved balance, initializing with zero');
+      dispatch(setBalance("0"));
     }
     
     isInitialized.current = true; // Mark as initialized
@@ -610,7 +611,7 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen bg-[#070005] text-white pb-20">
+    <div className="min-h-screen bg-[#070005] text-white pb-20 game-page-container">
       {/* Header */}
       {renderHeader()}
 
@@ -654,23 +655,37 @@ export default function Home() {
         </div>
       </div>
       
-      {/* Video Section */}
-      <WheelVideo />
+      {/* Video and Description Section */}
+      <div className="px-4 md:px-8 lg:px-20 my-12">
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="w-full lg:w-1/2">
+            <WheelVideo />
+          </div>
+          <div className="w-full lg:w-1/2">
+            <WheelDescription />
+          </div>
+        </div>
+      </div>
       
-      {/* Game Description */}
-      <WheelDescription />
+      {/* Strategy Guide and Probabilities Section */}
+      <div className="px-4 md:px-8 lg:px-20 my-12">
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="w-full lg:w-1/2">
+            <WheelStrategyGuide />
+          </div>
+          <div className="w-full lg:w-1/2">
+            <WheelProbability />
+          </div>
+        </div>
+      </div>
       
-      {/* Strategy Guide */}
-      <WheelStrategyGuide />
-      
-      {/* Win Probabilities */}
-      <WheelProbability />
-      
-      {/* Payouts */}
-      <WheelPayouts />
-      
-      {/* Game History */}
-      <WheelHistory gameHistory={gameHistory} />
+      {/* Payouts and History Section */}
+      <div className="px-4 md:px-8 lg:px-20 my-12">
+        <div className="flex flex-col gap-12">
+          <WheelPayouts />
+          <WheelHistory gameHistory={gameHistory} />
+        </div>
+      </div>
 
       {/* VRF Proof Required Modal */}
       <VRFProofRequiredModal

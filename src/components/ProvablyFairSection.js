@@ -9,27 +9,31 @@ const ProvablyFairSection = () => {
   const steps = [
     {
       id: 1,
-      title: 'Client Seed Generation',
-      description: 'When you begin a game session, your browser generates a random client seed. This seed is hashed and stored, and you can verify it at any time.',
-      icon: 'client-seed'
+      title: 'Chainlink VRF Request',
+      description: 'When you start a game, our smart contract requests verifiable randomness from Chainlink VRF on Arbitrum. This process is fully on-chain and transparent.',
+      icon: 'client-seed',
+      code: 'requestId = vrfCoordinator.requestRandomWords(\n  keyHash,\n  subscriptionId,\n  requestConfirmations,\n  callbackGasLimit,\n  numWords\n);'
     },
     {
       id: 2,
-      title: 'Server Seed Generation',
-      description: 'Our system generates a server seed for each game round. The hash of this seed is publicly visible before the game, but the original seed remains secret until the round is complete.',
-      icon: 'server-seed'
+      title: 'Randomness Generation',
+      description: 'Chainlink VRF generates cryptographically secure random numbers and delivers them to our smart contract within 1.5 seconds (6 Arbitrum blocks).',
+      icon: 'server-seed',
+      code: '// Chainlink VRF generates random values\n// and delivers them on-chain\nrandomWords = generateVerifiableRandomValue();\n// 6 Arbitrum blocks ≈ 1.5 seconds'
     },
     {
       id: 3,
-      title: 'Game Result Calculation',
-      description: 'When you play, the result is calculated by combining your client seed with our server seed using HMAC-SHA256. This creates provably random and fair outcomes that neither party can manipulate.',
-      icon: 'calculation'
+      title: 'On-Chain Verification',
+      description: 'The randomness is verified on-chain through cryptographic proofs, ensuring that neither players nor casino operators can manipulate the outcome.',
+      icon: 'calculation',
+      code: 'function fulfillRandomWords(\n  uint256 requestId,\n  uint256[] memory randomWords\n) internal override {\n  // Store verified random values\n  requests[requestId].randomWords = randomWords;\n  requests[requestId].fulfilled = true;\n}'
     },
     {
       id: 4,
-      title: 'Transparent Verification',
-      description: 'After each game, we reveal the server seed. You can use our verification tool to confirm that the game result was determined by the combination of the disclosed seeds.',
-      icon: 'verification'
+      title: 'Transparent Results',
+      description: 'Game results are determined by the verified random numbers and can be independently verified by anyone through the Arbitrum blockchain explorer.',
+      icon: 'verification',
+      code: '// After game completes\nconst requestId = game.vrfRequestId;\nconst randomResult = vrfContract.getRandomWords(requestId);\nconst verified = verifyOnChain(randomResult);\nconsole.log("Verified on-chain:", verified);'
     },
   ];
   
@@ -42,7 +46,7 @@ const ProvablyFairSection = () => {
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="flex items-center mb-8">
           <div className="w-1 h-6 bg-gradient-to-r from-red-magic to-blue-magic rounded-full mr-3"></div>
-          <h2 className="text-2xl font-display font-bold text-white">Provably Fair Gaming</h2>
+          <h2 className="text-2xl font-display font-bold text-white">Chainlink VRF Powered Fairness</h2>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -50,20 +54,21 @@ const ProvablyFairSection = () => {
           <div className="lg:col-span-5">
             <div className="p-[1px] bg-gradient-to-r from-red-magic to-blue-magic rounded-xl h-full">
               <div className="bg-[#1A0015] rounded-xl p-6 h-full">
-                <h3 className="text-white text-xl font-medium mb-4">What is Provably Fair?</h3>
+                <h3 className="text-white text-xl font-medium mb-4">What is Chainlink VRF?</h3>
                 <p className="text-white/80 mb-6">
-                  Provably Fair is a cryptographic algorithm that ensures complete transparency and fairness in online gambling. 
-                  Unlike traditional online casinos that operate as "black boxes," our provably fair system allows you to verify 
-                  that game outcomes were not manipulated.
+                  Chainlink VRF (Verifiable Random Function) is a provably fair and verifiable source of randomness designed for 
+                  smart contracts. Unlike traditional RNG systems, Chainlink VRF is cryptographically secure and fully verifiable 
+                  on-chain, ensuring that neither APT-Casino nor any other party can manipulate game outcomes.
                 </p>
                 
                 <div className="bg-[#250020] p-4 rounded-lg mb-6 border-l-2 border-red-magic">
-                  <h4 className="text-white font-medium mb-2">Why it matters</h4>
+                  <h4 className="text-white font-medium mb-2">Why Chainlink VRF matters</h4>
                   <ul className="text-white/70 text-sm space-y-2 list-disc pl-4">
-                    <li>Impossible for the casino to manipulate results</li>
-                    <li>Game outcomes can be independently verified</li>
-                    <li>You don't need to trust us - you can verify yourself</li>
-                    <li>Results are determined by cryptographic algorithms</li>
+                    <li>Cryptographically guaranteed randomness</li>
+                    <li>Fully verifiable on the Arbitrum blockchain</li>
+                    <li>Lightning-fast results (1.5 seconds)</li>
+                    <li>Immune to manipulation by players, casino, or validators</li>
+                    <li>Transparent process from request to result</li>
                   </ul>
                 </div>
                 
@@ -71,7 +76,7 @@ const ProvablyFairSection = () => {
                   <div className="inline-block">
                     <div className="p-[1px] bg-gradient-to-r from-red-magic to-blue-magic rounded-md inline-block">
                       <button className="bg-[#1A0015] hover:bg-[#250020] transition-colors text-white px-6 py-2 rounded-md flex items-center">
-                        Verify Your Games
+                        Verify On-Chain
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                         </svg>
@@ -87,7 +92,7 @@ const ProvablyFairSection = () => {
           <div className="lg:col-span-7">
             <div className="p-[1px] bg-gradient-to-r from-red-magic/40 to-blue-magic/40 rounded-xl">
               <div className="bg-[#1A0015] rounded-xl p-6">
-                <h3 className="text-white text-xl font-medium mb-4">How It Works</h3>
+                <h3 className="text-white text-xl font-medium mb-4">How Chainlink VRF Works</h3>
                 
                 {/* Steps tabs */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-6">
@@ -122,13 +127,10 @@ const ProvablyFairSection = () => {
                     </p>
                   </div>
                   
-                  {/* Code example - In a real implementation this would be more detailed */}
+                  {/* Code example showing Chainlink VRF implementation */}
                   <div className="bg-[#0D0D0D] rounded-lg p-4 overflow-x-auto">
                     <pre className="text-sm text-green-400 font-mono">
-                      {activeTab === 1 && 'clientSeed = generateRandomSeed(32);\nhash = SHA256(clientSeed);\nconsole.log("Client seed hash:", hash);'}
-                      {activeTab === 2 && 'serverSeed = generateRandomSeed(64);\nserverHash = SHA256(serverSeed);\n// Only serverHash is shown to user\nconsole.log("Server hash:", serverHash);'}
-                      {activeTab === 3 && 'result = HMAC-SHA256(serverSeed, clientSeed);\ngameOutcome = mapToGameResult(result);\nconsole.log("Game outcome:", gameOutcome);'}
-                      {activeTab === 4 && '// After game completes\nconsole.log("Original server seed:", serverSeed);\nverified = verifyResult(clientSeed, serverSeed, result);\nconsole.log("Verified:", verified);'}
+                      {steps[activeTab-1].code}
                     </pre>
                   </div>
                 </div>

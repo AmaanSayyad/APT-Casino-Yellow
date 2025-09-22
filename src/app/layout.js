@@ -3,7 +3,7 @@ import "@/styles/globals.css";
 import Providers from "./providers";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import YellowNetworkBadge from "@/components/YellowNetworkBadge";
+import GlobalWalletManager from "@/components/GlobalWalletManager";
 
 
 const inter = Inter({ subsets: ["latin"] });
@@ -21,10 +21,10 @@ export default function RootLayout({ children }) {
         suppressHydrationWarning={true}
       >
         <Providers>
+          <GlobalWalletManager />
           <Navbar />
           {children}
           <Footer />
-          <YellowNetworkBadge />
         </Providers>
       </body>
     </html>

@@ -1,170 +1,353 @@
 "use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { FaChevronDown, FaLightbulb, FaChartLine, FaExclamationTriangle } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { Box, Typography, Paper, Accordion, AccordionSummary, AccordionDetails, Avatar, Chip, Divider, Fade } from '@mui/material';
+import { FaLightbulb, FaChevronDown, FaStar, FaExclamationTriangle, FaChartLine, FaQuestion, FaCalculator, FaBookOpen, FaCheck, FaTimes } from 'react-icons/fa';
 
 const WheelStrategyGuide = () => {
-  const [activeTab, setActiveTab] = useState('beginners');
-  
-  const strategies = {
-    beginners: [
-      {
-        title: "Start Small, Learn the Game",
-        description: "Begin with small bets on the low-risk wheel to understand how the game works without risking too much of your bankroll.",
-        icon: <FaLightbulb className="text-yellow-400" />
-      },
-      {
-        title: "Set a Budget",
-        description: "Decide how much you're willing to spend before you start playing and stick to it. Never chase losses.",
-        icon: <FaChartLine className="text-green-400" />
-      },
-      {
-        title: "Understand the Odds",
-        description: "Take time to understand the probability of winning with each risk level. Low risk offers more frequent but smaller wins.",
-        icon: <FaChartLine className="text-blue-400" />
-      }
-    ],
-    intermediate: [
-      {
-        title: "Risk Level Switching",
-        description: "After a series of wins on low risk, consider switching to medium risk for a few spins to potentially increase your profits.",
-        icon: <FaLightbulb className="text-yellow-400" />
-      },
-      {
-        title: "Profit Banking",
-        description: "When you're on a winning streak, set aside a portion of your winnings (e.g., 50%) and continue playing with the rest.",
-        icon: <FaChartLine className="text-green-400" />
-      },
-      {
-        title: "Session Time Limits",
-        description: "Set a time limit for your gaming sessions to prevent fatigue-based decision making. Take breaks regularly.",
-        icon: <FaExclamationTriangle className="text-orange-400" />
-      }
-    ],
-    advanced: [
-      {
-        title: "The Martingale Strategy",
-        description: "Double your bet after each loss, so when you eventually win, you recover all previous losses plus a profit equal to your original bet. Use with caution and only with a large bankroll.",
-        icon: <FaExclamationTriangle className="text-red-400" />
-      },
-      {
-        title: "The D'Alembert Strategy",
-        description: "Increase your bet by one unit after a loss and decrease it by one unit after a win. This is a more conservative approach than Martingale.",
-        icon: <FaChartLine className="text-blue-400" />
-      },
-      {
-        title: "The Fibonacci Strategy",
-        description: "Follow the Fibonacci sequence (1, 1, 2, 3, 5, 8, 13...) for your bet sizes after losses, moving one step forward after a loss and two steps back after a win.",
-        icon: <FaLightbulb className="text-yellow-400" />
-      }
-    ]
+  const [expanded, setExpanded] = useState(false);
+
+  const handleChange = (panel) => (event, isExpanded) => {
+    setExpanded(isExpanded ? panel : false);
   };
+
+  const strategies = [
+    {
+      id: 'strategy-1',
+      title: 'Low Risk Approach',
+      difficulty: 'Beginner',
+      effectiveness: 3,
+      risk: 'Low',
+      color: '#14D854',
+      description: 'This strategy focuses on consistent small wins by sticking to the low-risk wheel setting. It offers the highest probability of winning but with smaller multipliers.',
+      pros: ['More frequent wins', 'Lower bankroll volatility', 'Good for beginners to learn the game'],
+      cons: ['Lower potential payouts', 'Slower bankroll growth', 'Less exciting gameplay experience'],
+      example: 'Set the wheel to Low Risk, bet a small percentage of your bankroll (1-3%), and aim for consistent small wins rather than big payouts.'
+    },
+    {
+      id: 'strategy-2',
+      title: 'Medium Risk Balancer',
+      difficulty: 'Intermediate',
+      effectiveness: 4,
+      risk: 'Medium',
+      color: '#FFA500',
+      description: 'A balanced approach that uses the medium risk setting to get a mix of reasonable win probability with decent multipliers. This strategy aims to balance risk and reward.',
+      pros: ['Good balance of win frequency and payout size', 'Moderate bankroll growth potential', 'More exciting than low risk'],
+      cons: ['Higher variance than low risk', 'Requires larger bankroll management', 'Losing streaks can be longer'],
+      example: 'Use the Medium Risk wheel, bet 2-5% of your bankroll, and be prepared for some losses between wins. Consider taking profits after significant wins.'
+    },
+    {
+      id: 'strategy-3',
+      title: 'High Risk Hunter',
+      difficulty: 'Advanced',
+      effectiveness: 3,
+      risk: 'High',
+      color: '#d82633',
+      description: 'This aggressive strategy targets the high multipliers on the high-risk wheel. It accepts frequent losses for the chance at large payouts that can quickly multiply your bankroll.',
+      pros: ['Potential for massive wins', 'Can grow bankroll quickly when lucky', 'Most exciting gameplay experience'],
+      cons: ['High probability of losing streaks', 'Requires strict bankroll management', 'Can deplete funds quickly without discipline'],
+      example: 'Select High Risk, bet only 1-2% of your bankroll per spin, and be prepared for many losses. The goal is to hit a few big multipliers that make up for all the losses.'
+    },
+    {
+      id: 'strategy-4',
+      title: 'Martingale Adaptation',
+      difficulty: 'Advanced',
+      effectiveness: 2,
+      risk: 'High',
+      color: '#681DDB',
+      description: 'A modified Martingale system where you double your bet after each loss, but only on the low-risk wheel to improve win probability. Switch back to your base bet after any win.',
+      pros: ['Can recover previous losses with a single win', 'Works well during short sessions', 'Simple concept to follow'],
+      cons: ['Requires large bankroll', 'Table limits can prevent proper execution', 'A long losing streak can be devastating'],
+      example: 'Start with a small base bet (e.g., 0.001 ETH) on Low Risk. After each loss, double your bet. After any win, return to your base bet amount.'
+    },
+    {
+      id: 'strategy-5',
+      title: 'Risk Ladder Climbing',
+      difficulty: 'Intermediate',
+      effectiveness: 3,
+      risk: 'Mixed',
+      color: '#4361EE',
+      description: 'This strategy involves starting with low risk and progressively moving to higher risk levels as you accumulate wins. It aims to protect your initial bankroll while allowing for bigger wins later.',
+      pros: ['Protects initial bankroll', 'Allows for bigger wins after securing profit', 'Adaptable to different situations'],
+      cons: ['Requires tracking wins and losses', 'Needs discipline to switch risk levels properly', 'Complex decision-making during play'],
+      example: 'Start with Low Risk until you\'ve won 20% over your starting bankroll. Then switch to Medium Risk until you\'ve won another 20%. Finally, use High Risk with a portion of your profits.'
+    }
+  ];
   
   return (
-    <div id="strategy-guide" className="my-16 px-4 md:px-8 lg:px-20 scroll-mt-24">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        viewport={{ once: true }}
+    <Paper
+      elevation={5}
+      sx={{
+        p: { xs: 2, md: 3 },
+        borderRadius: 3,
+        background: 'linear-gradient(135deg, rgba(9, 0, 5, 0.9) 0%, rgba(25, 5, 30, 0.85) 100%)',
+        backdropFilter: 'blur(15px)',
+        border: '1px solid rgba(104, 29, 219, 0.2)',
+        mb: 5,
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+        height: '100%',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '5px',
+          background: 'linear-gradient(90deg, #FFA500, #681DDB)',
+        }
+      }}
+    >
+      <Typography 
+        variant="h5" 
+        fontWeight="bold" 
+        gutterBottom
+        sx={{ 
+          borderBottom: '1px solid rgba(104, 29, 219, 0.3)',
+          pb: 1.5,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          color: 'white',
+          textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+        }}
       >
-        <h2 className="text-2xl md:text-3xl font-bold font-display mb-6 bg-gradient-to-r from-red-300 to-amber-300 bg-clip-text text-transparent">
+        <FaBookOpen color="#FFA500" size={22} />
+        <span style={{ background: 'linear-gradient(90deg, #FFFFFF, #FFA500)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           Spin the Wheel Strategy Guide
-        </h2>
-        
-        <div className="bg-gradient-to-br from-red-900/20 to-red-800/5 rounded-xl border border-red-800/20 shadow-lg shadow-red-900/10 overflow-hidden">
-          <div className="flex border-b border-red-800/20">
-            <button 
-              className={`flex-1 py-3 px-4 text-center font-medium transition-all duration-300 ${activeTab === 'beginners' ? 'bg-red-900/30 text-white' : 'text-white/70 hover:bg-red-900/20'}`}
-              onClick={() => setActiveTab('beginners')}
+        </span>
+      </Typography>
+      
+      <Typography 
+        variant="body2" 
+        color="rgba(255,255,255,0.7)"
+        sx={{ mb: 3 }}
+      >
+        Effective betting strategies to maximize your Fortune Wheel experience.
+      </Typography>
+
+      {strategies.map((strategy, index) => (
+        <Fade 
+          in={true} 
+          key={strategy.id}
+          style={{ 
+            transformOrigin: '0 0 0',
+            transitionDelay: `${index * 100}ms`
+          }}
+        >
+          <Accordion 
+            expanded={expanded === strategy.id} 
+            onChange={handleChange(strategy.id)}
+            sx={{
+              backgroundColor: 'transparent',
+              backgroundImage: 'none',
+              boxShadow: 'none',
+              mb: 2,
+              '&:before': {
+                display: 'none',
+              },
+              '& .MuiAccordionSummary-root': {
+                background: `linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(${parseInt(strategy.color.slice(1, 3), 16)}, ${parseInt(strategy.color.slice(3, 5), 16)}, ${parseInt(strategy.color.slice(5, 7), 16)}, 0.2) 100%)`,
+                borderRadius: expanded === strategy.id ? '12px 12px 0 0' : '12px',
+                border: `1px solid ${strategy.color}50`,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  backgroundColor: 'rgba(0,0,0,0.4)',
+                }
+              },
+              '& .MuiAccordionDetails-root': {
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                borderRadius: '0 0 12px 12px',
+                borderLeft: `1px solid ${strategy.color}50`,
+                borderRight: `1px solid ${strategy.color}50`,
+                borderBottom: `1px solid ${strategy.color}50`,
+                position: 'relative',
+                overflow: 'hidden',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '4px',
+                  height: '100%',
+                  backgroundColor: strategy.color,
+                }
+              }
+            }}
+          >
+            <AccordionSummary
+              expandIcon={<FaChevronDown color="white" />}
+              aria-controls={`${strategy.id}-content`}
+              id={`${strategy.id}-header`}
+              sx={{
+                '& .MuiAccordionSummary-expandIconWrapper': {
+                  color: 'white',
+                  transition: 'transform 0.3s',
+                  transform: expanded === strategy.id ? 'rotate(180deg)' : 'rotate(0deg)',
+                },
+              }}
             >
-              Beginner Strategies
-            </button>
-            <button 
-              className={`flex-1 py-3 px-4 text-center font-medium transition-all duration-300 ${activeTab === 'intermediate' ? 'bg-red-900/30 text-white' : 'text-white/70 hover:bg-red-900/20'}`}
-              onClick={() => setActiveTab('intermediate')}
-            >
-              Intermediate Strategies
-            </button>
-            <button 
-              className={`flex-1 py-3 px-4 text-center font-medium transition-all duration-300 ${activeTab === 'advanced' ? 'bg-red-900/30 text-white' : 'text-white/70 hover:bg-red-900/20'}`}
-              onClick={() => setActiveTab('advanced')}
-            >
-              Advanced Strategies
-            </button>
-          </div>
-          
-          <div className="p-6">
-            <div className="space-y-6">
-              {strategies[activeTab].map((strategy, index) => (
-                <div key={index} className="bg-black/20 rounded-lg p-4 border border-red-800/10">
-                  <div className="flex items-center mb-2">
-                    <div className="w-8 h-8 rounded-full bg-red-900/30 flex items-center justify-center mr-3">
-                      {strategy.icon}
-                    </div>
-                    <h3 className="text-lg font-bold text-white">{strategy.title}</h3>
-                  </div>
-                  <p className="text-white/70 pl-11">{strategy.description}</p>
-                </div>
-              ))}
-            </div>
-            
-            {activeTab === 'advanced' && (
-              <div className="mt-6 p-4 bg-yellow-900/20 border border-yellow-800/30 rounded-lg">
-                <div className="flex items-start">
-                  <FaExclamationTriangle className="text-yellow-500 mr-3 mt-1 flex-shrink-0" />
-                  <p className="text-white/70 text-sm">
-                    <span className="font-bold text-yellow-400 block mb-1">Risk Warning:</span>
-                    Advanced strategies involve higher risk and are not guaranteed to work. Always gamble responsibly and be prepared to lose what you bet. These strategies can deplete your bankroll quickly if you encounter a long losing streak.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        <div className="mt-8 bg-gradient-to-br from-blue-900/20 to-blue-800/5 rounded-xl p-6 border border-blue-800/20">
-          <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-            <FaLightbulb className="text-yellow-400 mr-2" />
-            General Tips for Success
-          </h3>
-          
-          <ul className="space-y-3 text-white/70">
-            <li className="flex items-start">
-              <div className="w-5 h-5 rounded-full bg-blue-900/50 flex items-center justify-center mr-2 flex-shrink-0 mt-0.5">
-                <span className="text-xs">1</span>
-              </div>
-              <span>Never bet more than you can afford to lose. Gambling should be entertaining, not a financial burden.</span>
-            </li>
-            <li className="flex items-start">
-              <div className="w-5 h-5 rounded-full bg-blue-900/50 flex items-center justify-center mr-2 flex-shrink-0 mt-0.5">
-                <span className="text-xs">2</span>
-              </div>
-              <span>Take regular breaks to maintain clear decision-making.</span>
-            </li>
-            <li className="flex items-start">
-              <div className="w-5 h-5 rounded-full bg-blue-900/50 flex items-center justify-center mr-2 flex-shrink-0 mt-0.5">
-                <span className="text-xs">3</span>
-              </div>
-              <span>Keep track of your wins and losses to understand your playing patterns.</span>
-            </li>
-            <li className="flex items-start">
-              <div className="w-5 h-5 rounded-full bg-blue-900/50 flex items-center justify-center mr-2 flex-shrink-0 mt-0.5">
-                <span className="text-xs">4</span>
-              </div>
-              <span>Remember that each spin is independent of previous spins. Past results do not influence future outcomes.</span>
-            </li>
-            <li className="flex items-start">
-              <div className="w-5 h-5 rounded-full bg-blue-900/50 flex items-center justify-center mr-2 flex-shrink-0 mt-0.5">
-                <span className="text-xs">5</span>
-              </div>
-              <span>Consider using the auto-betting feature with stop-loss and take-profit limits to manage your risk.</span>
-            </li>
-          </ul>
-        </div>
-      </motion.div>
-    </div>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                <Avatar 
+                  sx={{ 
+                    bgcolor: strategy.color,
+                    width: 40,
+                    height: 40,
+                    boxShadow: `0 0 10px ${strategy.color}80`,
+                    border: '1px solid rgba(255,255,255,0.2)'
+                  }}
+                >
+                  <FaLightbulb />
+                </Avatar>
+                <Box sx={{ flex: 1 }}>
+                  <Typography 
+                    variant="h6" 
+                    color="white" 
+                    fontWeight="bold" 
+                    sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}
+                  >
+                    {strategy.title}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+                    <Chip 
+                      label={strategy.difficulty} 
+                      size="small" 
+                      sx={{ 
+                        bgcolor: 'rgba(0,0,0,0.3)', 
+                        color: 'white',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        height: 24
+                      }} 
+                    />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography variant="caption" color="rgba(255,255,255,0.7)">
+                        Effectiveness:
+                      </Typography>
+                      {[...Array(5)].map((_, i) => (
+                        <FaStar 
+                          key={i} 
+                          size={12} 
+                          color={i < strategy.effectiveness ? '#FFA500' : 'rgba(255,255,255,0.2)'} 
+                        />
+                      ))}
+                    </Box>
+                    <Chip 
+                      label={`Risk: ${strategy.risk}`} 
+                      size="small" 
+                      sx={{ 
+                        bgcolor: strategy.risk === 'High' ? 'rgba(216, 38, 51, 0.2)' : 
+                                strategy.risk === 'Medium' ? 'rgba(255, 165, 0, 0.2)' : 
+                                'rgba(20, 216, 84, 0.2)', 
+                        color: strategy.risk === 'High' ? '#d82633' : 
+                               strategy.risk === 'Medium' ? '#FFA500' : 
+                               '#14D854',
+                        border: `1px solid ${strategy.risk === 'High' ? '#d8263340' : 
+                                          strategy.risk === 'Medium' ? '#FFA50040' : 
+                                          '#14D85440'}`,
+                        height: 24
+                      }} 
+                    />
+                  </Box>
+                </Box>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography paragraph color="rgba(255,255,255,0.9)" sx={{ mb: 2 }}>
+                {strategy.description.length > 100 ? strategy.description.substring(0, 100) + '...' : strategy.description}
+              </Typography>
+              
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 2 }}>
+                <Box 
+                  sx={{ 
+                    flex: 1, 
+                    p: 2, 
+                    borderRadius: 2, 
+                    backgroundColor: 'rgba(20, 216, 84, 0.1)', 
+                    border: '1px solid rgba(20, 216, 84, 0.2)'
+                  }}
+                >
+                  <Typography variant="subtitle2" color="#14D854" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <FaCheck color="#14D854" />
+                    Advantages
+                  </Typography>
+                  <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                    {strategy.pros.map((pro, i) => (
+                      <Typography component="li" key={i} variant="body2" color="rgba(255,255,255,0.8)" sx={{ mb: 0.5 }}>
+                        {pro}
+                      </Typography>
+                    ))}
+                  </Box>
+                </Box>
+                
+                <Box 
+                  sx={{ 
+                    flex: 1, 
+                    p: 2, 
+                    borderRadius: 2, 
+                    backgroundColor: 'rgba(216, 38, 51, 0.1)', 
+                    border: '1px solid rgba(216, 38, 51, 0.2)'
+                  }}
+                >
+                  <Typography variant="subtitle2" color="#d82633" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <FaTimes color="#d82633" />
+                    Disadvantages
+                  </Typography>
+                  <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                    {strategy.cons.map((con, i) => (
+                      <Typography component="li" key={i} variant="body2" color="rgba(255,255,255,0.8)" sx={{ mb: 0.5 }}>
+                        {con}
+                      </Typography>
+                    ))}
+                  </Box>
+                </Box>
+              </Box>
+              
+              <Box 
+                sx={{ 
+                  p: 2, 
+                  borderRadius: 2, 
+                  backgroundColor: 'rgba(255, 165, 0, 0.1)', 
+                  border: '1px solid rgba(255, 165, 0, 0.2)',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 2
+                }}
+              >
+                <FaCalculator color="#FFA500" style={{ marginTop: '3px' }} />
+                <Box>
+                  <Typography variant="subtitle2" color="#FFA500" sx={{ mb: 1 }}>
+                    Example:
+                  </Typography>
+                  <Typography variant="body2" color="rgba(255,255,255,0.8)">
+                    {strategy.example.length > 80 ? strategy.example.substring(0, 80) + '...' : strategy.example}
+                  </Typography>
+                </Box>
+              </Box>
+            </AccordionDetails>
+          </Accordion>
+        </Fade>
+      ))}
+      
+      <Box 
+        sx={{ 
+          mt: 2, 
+          p: 2, 
+          borderRadius: 2, 
+          background: 'linear-gradient(135deg, rgba(216, 38, 51, 0.05) 0%, rgba(216, 38, 51, 0.15) 100%)',
+          border: '1px solid rgba(216, 38, 51, 0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)'
+        }}
+      >
+        <FaExclamationTriangle color="#d82633" size={20} style={{ flexShrink: 0 }} />
+        <Typography variant="body2" color="rgba(255,255,255,0.8)">
+          <strong>Important:</strong> These strategies can enhance entertainment but cannot overcome the house edge. Always gamble responsibly and set clear limits for your play.
+        </Typography>
+      </Box>
+    </Paper>
   );
 };
 

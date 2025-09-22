@@ -34,15 +34,18 @@ export default function HeroSection() {
         `font-display capitalize flex text-white flex-col text-center items-center gap-6 z-10 max-w-7xl w-full mx-auto ${showAnnouncement ? '' : 'mt-14 sm:mt-14 md:mt-16'}`
       }>
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight">
-                        Enter the Ethereum Gaming <br /> Arena:{" "}
+          100% On-Chain{" "}
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-magic to-blue-magic">
-            APT-Casino
+          Randomness
           </span>
         </h1>
-        <h2 className="text-[#B3B3B3] mt-4 text-lg sm:text-xl leading-relaxed max-w-2xl">
-          Dive into the next generation of gaming with APT-Casino – where every move is powered by <span className="text-white font-semibold">Ethereum Blockchain</span>. Discover new games, connect
-          with friends, and unlock endless possibilities.
+        <h2 className="text-[#B3B3B3] mt-4 text-lg sm:text-xl leading-relaxed max-w-3xl">
+          <span className="text-white font-semibold">Autonomous Provably Transparent</span> gaming powered by <span className="text-white font-semibold">Arbitrum</span> & <span className="text-white font-semibold">Chainlink VRF</span>. Experience lightning-fast 250ms blocks with cryptographic fairness you can verify, not just trust.
         </h2>
+        <p className="text-[#B3B3B3] text-lg sm:text-xl max-w-3xl">
+          No rigged outcomes. No hidden limits. No custody of your funds. 
+          <span className="text-green-400 font-medium"> Just pure, transparent GambleFi</span> where mathematics replaces trust.
+        </p>
         
         <div className="flex flex-wrap justify-center gap-4 mt-6">
           <LaunchGameButton />
@@ -60,7 +63,7 @@ export default function HeroSection() {
         </div>
         
         {/* Stats Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 mt-12 bg-black/20 backdrop-blur-sm p-6 rounded-xl border border-purple-600/20">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-12 bg-black/20 backdrop-blur-sm p-6 rounded-xl border border-purple-600/20">
           <div className="text-center">
             <p className="text-gray-400 text-sm">Total Players</p>
             <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-magic to-blue-magic">
@@ -73,10 +76,16 @@ export default function HeroSection() {
               {isDev ? '15,000' : '37,500'} ETH
             </p>
           </div>
-          <div className="text-center hidden md:block">
-            <p className="text-gray-400 text-sm">Active Games</p>
+          <div className="text-center hidden sm:block">
+            <p className="text-gray-400 text-sm">VRF Speed</p>
             <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-magic to-blue-magic">
-              {isDev ? '3' : '14'}
+              1.5s
+            </p>
+          </div>
+          <div className="text-center hidden md:block">
+            <p className="text-gray-400 text-sm">Provably Fair</p>
+            <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-magic to-blue-magic">
+              100%
             </p>
           </div>
         </div>
@@ -102,6 +111,8 @@ export default function HeroSection() {
           )}
         </div>
       </div>
+      
+      
     </section>
   );
 }

@@ -87,35 +87,35 @@ const StatsOverview = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="bg-[#250020] rounded-lg p-3">
           <p className="text-xs text-white/50 mb-1">Market Cap</p>
-          <p className="text-lg font-medium">
+          <div className="text-lg font-medium">
             {stats.loading ? (
               <div className="h-5 w-24 bg-white/10 animate-pulse rounded"></div>
             ) : (
               formatPrice(stats.marketCap)
             )}
-          </p>
+          </div>
         </div>
         
         <div className="bg-[#250020] rounded-lg p-3">
           <p className="text-xs text-white/50 mb-1">24h Volume</p>
-          <p className="text-lg font-medium">
+          <div className="text-lg font-medium">
             {stats.loading ? (
               <div className="h-5 w-24 bg-white/10 animate-pulse rounded"></div>
             ) : (
               formatPrice(stats.volume24h)
             )}
-          </p>
+          </div>
         </div>
         
         <div className="bg-[#250020] rounded-lg p-3">
           <p className="text-xs text-white/50 mb-1">24h Change</p>
-          <p className={`text-lg font-medium ${stats.priceChange24h && stats.priceChange24h > 0 ? 'text-green-400' : 'text-red-400'}`}>
+          <div className={`text-lg font-medium ${stats.priceChange24h && stats.priceChange24h > 0 ? 'text-green-400' : 'text-red-400'}`}>
             {stats.loading ? (
               <div className="h-5 w-16 bg-white/10 animate-pulse rounded"></div>
             ) : (
               `${stats.priceChange24h > 0 ? '+' : ''}${stats.priceChange24h}%`
             )}
-          </p>
+          </div>
         </div>
       </div>
       

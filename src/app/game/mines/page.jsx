@@ -26,8 +26,7 @@ import AIAutoBetting from "./components/AIAutoBetting";
 import AISettingsModal from "./components/AISettingsModal";
 import vrfProofService from '@/services/VRFProofService';
 import VRFProofRequiredModal from '@/components/VRF/VRFProofRequiredModal';
-import YellowIntegrationPanel from '@/components/YellowNetwork/IntegrationPanel';
-import useYellowVRF from '@/hooks/useYellowVRF';
+import vrfLogger from '@/services/VRFLoggingService';
 
 export default function Mines() {
   // Game State
@@ -69,16 +68,6 @@ export default function Mines() {
   
   // Theme
   const { theme } = useTheme();
-  
-  // Yellow Network VRF
-  const { 
-    isReady: isYellowVRFReady, 
-    vrfCounts, 
-    generateRandomFromProof 
-  } = useYellowVRF();
-  
-  // Use Yellow Network VRF flag
-  const [useYellowNetwork, setUseYellowNetwork] = useState(true);
   
   // Handle AI activation/deactivation
   const handleAIToggle = () => {
@@ -123,53 +112,38 @@ export default function Mines() {
   };
   
   // Handle form submission
-  const handleFormSubmit = async (formData) => {
-    if (useYellowNetwork) {
-      // Check if Yellow Network VRF is ready
-      if (!isYellowVRFReady) {
-        alert('Yellow Network VRF is not ready. Please wait a moment and try again.');
-        return;
-      }
-      
-      // Check if Yellow Network VRF proofs are available
-      const availableProofs = vrfCounts.MINES || 0;
+  const handleFormSubmit = (formData) => {
+    // Initialize game session logging
+    vrfLogger.initializeGameSession('MINES', 'standard');
+    
+    // Check if VRF proofs are available for this game
+    try {
+      const vrfStats = vrfProofService.getProofStats();
+      const availableProofs = vrfStats.availableVRFs.MINES || 0;
       
       if (availableProofs <= 0) {
-        // Try to generate proofs
-        try {
-          await generateRandomFromProof('MINES');
-        } catch (error) {
-          console.error('❌ Error generating Yellow Network VRF proofs:', error);
-          alert('❌ Error generating Yellow Network VRF proofs. Please try again.');
-          return;
-        }
-      }
-      
-      console.log(`✅ Mines game allowed: Using Yellow Network state channels for VRF`);
-    } else {
-      // Fall back to Chainlink VRF
-      try {
-        const vrfStats = vrfProofService.getProofStats();
-        const availableProofs = vrfStats.availableVRFs.MINES || 0;
-        
-        if (availableProofs <= 0) {
-          setShowVRFModal(true);
-          return;
-        }
-        
-        console.log(`✅ Mines game allowed: ${availableProofs} VRF proofs available`);
-      } catch (error) {
-        console.error('❌ Error checking VRF proof availability:', error);
-        alert('❌ Error checking VRF proof availability. Please try again.');
+        setShowVRFModal(true);
         return;
       }
+      
+      console.log(`✅ Mines game allowed: ${availableProofs} VRF proofs available`);
+      
+      // Log VRF request with game parameters
+      vrfLogger.logVRFRequest('MINES', 'standard', formData.betAmount || '0.0', {
+        mines: formData.mines || 0,
+        tilesToReveal: formData.tilesToReveal || 0,
+        isAutoBetting: formData.isAutoBetting || false
+      });
+      
+    } catch (error) {
+      console.error('❌ Error checking VRF proof availability:', error);
+      vrfLogger.logError(error, 'VRF proof availability check');
+      alert('❌ Error checking VRF proof availability. Please try again.');
+      return;
     }
     
     console.log('Form submitted with data:', formData);
-    setBetSettings({
-      ...formData,
-      useYellowNetwork // Add flag to use Yellow Network
-    });
+    setBetSettings(formData);
     setGameInstance(prev => prev + 1); // Force re-render of game component
     setActiveTab("Manual"); // Switch to manual tab to show the game
   };
@@ -229,19 +203,19 @@ export default function Mines() {
   ], [gameStatus]);
 
   // Handle game completion (only when game ends - cashout or mine hit)
-  const handleGameComplete = async (result) => {
+  const handleGameComplete = (result) => {
+    // Consume VRF proof for this game
     try {
-      let vrfResult;
+      const vrfResult = vrfProofService.generateRandomFromProof('MINES');
+      console.log('🎲 Mines game completed, VRF proof consumed:', vrfResult);
       
-      if (useYellowNetwork && result.useYellowNetwork) {
-        // Use Yellow Network VRF
-        vrfResult = await generateRandomFromProof('MINES');
-        console.log('🟡 Mines game completed, Yellow Network VRF consumed:', vrfResult);
-      } else {
-        // Fallback to Chainlink VRF
-        vrfResult = vrfProofService.generateRandomFromProof('MINES');
-        console.log('🎲 Mines game completed, Chainlink VRF proof consumed:', vrfResult);
-      }
+      // Log game outcome calculation
+      vrfLogger.logGameOutcome('MINES', vrfResult, result, {
+        mines: result.mines || 0,
+        tilesRevealed: result.tilesRevealed || 0,
+        betAmount: result.betAmount || '0.0',
+        calculationMethod: 'VRF-based randomness'
+      });
       
       const newHistoryItem = {
         id: Date.now(),
@@ -251,29 +225,25 @@ export default function Mines() {
         payout: result.won ? `${result.payout || '0.00000'} ETH` : '0.00000 ETH',
         multiplier: result.won ? `${result.multiplier || '0.00'}x` : '0.00x',
         time: 'Just now',
-        vrfProvider: useYellowNetwork ? 'Yellow Network' : 'Chainlink',
         vrfProof: {
           proofId: vrfResult.proofId,
           transactionHash: vrfResult.transactionHash,
           logIndex: vrfResult.logIndex,
-          requestId: vrfResult.requestId || vrfResult.vrfValue,
+          requestId: vrfResult.requestId,
           randomNumber: vrfResult.randomNumber
         }
       };
       
       setGameHistory(prev => [newHistoryItem, ...prev].slice(0, 50));
       
-      // Log proof consumption
-      if (useYellowNetwork) {
-        const stats = { vrfCounts };
-        console.log(`🟡 Yellow Network VRF Stats after Mines game:`, stats);
-      } else {
-        const stats = vrfProofService.getProofStats();
-        console.log(`📊 Chainlink VRF Proof Stats after Mines game:`, stats);
-      }
+      // Log proof consumption and session summary
+      const stats = vrfProofService.getProofStats();
+      console.log(`📊 VRF Proof Stats after Mines game:`, stats);
+      vrfLogger.logGameSessionSummary();
       
     } catch (error) {
       console.error('❌ Error consuming VRF proof for Mines game:', error);
+      vrfLogger.logError(error, 'VRF proof consumption for Mines game');
       
       // Still add the history item even if VRF proof consumption fails
       const newHistoryItem = {
@@ -283,8 +253,7 @@ export default function Mines() {
         outcome: result.won ? 'win' : 'loss',
         payout: result.won ? `${result.payout || '0.00000'} ETH` : '0.00000 ETH',
         multiplier: result.won ? `${result.multiplier || '0.00'}x` : '0.00x',
-        time: 'Just now',
-        vrfProvider: useYellowNetwork ? 'Yellow Network (failed)' : 'Chainlink (failed)'
+        time: 'Just now'
       };
       
       setGameHistory(prev => [newHistoryItem, ...prev].slice(0, 50));
@@ -450,7 +419,7 @@ export default function Mines() {
   // Main Content Section
   const renderMainContent = () => (
     <div className="flex flex-col lg:flex-row gap-4 px-4 md:px-8 lg:px-20">
-      {/* Sidebar/Tabs */}
+          {/* Sidebar/Tabs */}
       <div className="w-full lg:w-1/3 xl:w-1/4">
         <motion.div 
           className="rounded-xl border-2 border-purple-700/30 bg-gradient-to-br from-[#290023]/80 to-[#150012]/90 backdrop-blur-sm p-5 shadow-xl shadow-purple-900/20"
@@ -459,16 +428,6 @@ export default function Mines() {
           transition={{ duration: 0.5 }}
         >
           <Tabs tabs={tabs} onTabChange={handleTabChange} />
-        </motion.div>
-        
-        {/* Yellow Network Integration Panel */}
-        <motion.div
-          className="mt-4"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <YellowIntegrationPanel gameType="MINES" />
         </motion.div>
       </div>
 
@@ -483,14 +442,6 @@ export default function Mines() {
         <div className="absolute top-0 right-0 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl -z-10"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl -z-10"></div>
         <div className="absolute top-1/3 left-1/3 w-40 h-40 bg-pink-500/5 rounded-full blur-2xl -z-10 animate-pulse"></div>
-        
-        {/* Yellow Network Badge */}
-        {useYellowNetwork && (
-          <div className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3 py-1.5 bg-yellow-900/30 border border-yellow-800/50 rounded-full">
-            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-            <span className="text-yellow-300 text-xs font-medium">Yellow Network Powered</span>
-          </div>
-        )}
         
         <motion.div 
           key={gameInstance}

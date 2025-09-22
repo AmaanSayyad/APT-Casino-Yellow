@@ -14,6 +14,7 @@ import { Typography } from "@mui/material";
 import { GiRollingDices, GiCardRandom, GiPokerHand } from "react-icons/gi";
 import { FaPercentage, FaBalanceScale, FaChartLine, FaCoins, FaTrophy, FaPlay, FaExternalLinkAlt } from "react-icons/fa";
 import vrfProofService from '../../../services/VRFProofService';
+import vrfLogger from '../../../services/VRFLoggingService';
 
 export default function Plinko() {
   const userBalance = useSelector((state) => state.balance.userBalance);
@@ -248,7 +249,7 @@ export default function Plinko() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070005] text-white">
+    <div className="min-h-screen bg-[#070005] text-white game-page-container">
       {showMobileWarning && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 px-4">
           <div className="bg-[#1A0015] border border-[#333947] rounded-xl p-6 max-w-md w-full text-center">

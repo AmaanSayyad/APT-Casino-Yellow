@@ -3,27 +3,16 @@ import { Button, Box, Typography, Menu, MenuItem, Alert } from '@mui/material';
 import { FaExchangeAlt } from 'react-icons/fa';
 
 const SUPPORTED_NETWORKS = {
-  MANTLE_SEPOLIA: {
-    chainId: '0x138b', // 5003 in decimal
-    chainName: 'Mantle Sepolia',
+  ARBITRUM_SEPOLIA: {
+    chainId: '0x66eee', // 421614 in decimal
+    chainName: 'Arbitrum Sepolia',
     nativeCurrency: {
-      name: 'Mantle',
-      symbol: 'MNT',
+      name: 'Arbitrum',
+      symbol: 'ETH',
       decimals: 18
     },
-    rpcUrls: ['https://rpc.sepolia.mantle.xyz'],
-    blockExplorerUrls: ['https://sepolia.mantlescan.xyz']
-  },
-  PHAROS_DEVNET: {
-    chainId: '0xc352', // 50002 in decimal
-    chainName: 'Pharos Devnet',
-    nativeCurrency: {
-      name: 'Pharos',
-      symbol: 'PHR',
-      decimals: 18
-    },
-    rpcUrls: ['https://devnet.dplabs-internal.com'],
-    blockExplorerUrls: ['https://pharosscan.xyz']
+    rpcUrls: ['https://sepolia-rollup.arbitrum.io/rpc'],
+    blockExplorerUrls: ['https://sepolia.arbiscan.io']
   }
 };
 
@@ -61,16 +50,12 @@ const NetworkSwitcher = () => {
       console.log('Detected Chain ID:', chainId);
 
       // Convert chainIds to lowercase for comparison
-      const mantleChainId = SUPPORTED_NETWORKS.MANTLE_SEPOLIA.chainId.toLowerCase();
-      const pharosChainId = SUPPORTED_NETWORKS.PHAROS_DEVNET.chainId.toLowerCase();
+      const arbitrumSepoliaChainId = SUPPORTED_NETWORKS.ARBITRUM_SEPOLIA.chainId.toLowerCase();
       const currentChainId = chainId.toLowerCase();
 
-      if (currentChainId === mantleChainId) {
-        console.log('Setting network to Mantle Sepolia');
-        setCurrentNetwork('MANTLE_SEPOLIA');
-      } else if (currentChainId === pharosChainId) {
-        console.log('Setting network to Pharos Devnet');
-        setCurrentNetwork('PHAROS_DEVNET');
+      if (currentChainId === arbitrumSepoliaChainId) {
+        console.log('Setting network to Arbitrum Sepolia');
+        setCurrentNetwork('ARBITRUM_SEPOLIA');
       } else {
         console.log('Unsupported network detected:', chainId);
         setCurrentNetwork(null);

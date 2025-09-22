@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import { 
   Dialog, 
   DialogTitle, 
@@ -176,7 +176,7 @@ export default function VRFPregenerationModal({ open, onClose }) {
   const getNetworkInfo = () => {
     const network = process.env.NEXT_PUBLIC_NETWORK || 'sepolia';
     const contractAddress = process.env.NEXT_PUBLIC_VRF_CONTRACT_ADDRESS || '0x1c80757C451adce96d6cADB514036F07fc2347cb';
-    const treasuryAddress = process.env.TREASURY_ADDRESS || '0xD599B4a78f602f597973F693439e89A97eDd4369';
+    const treasuryAddress = process.env.TREASURY_ADDRESS || '0xb424d2369F07b925D1218B08e56700AF5928287b';
     
     return { network, contractAddress, treasuryAddress };
   };
@@ -203,15 +203,20 @@ export default function VRFPregenerationModal({ open, onClose }) {
   const getStatusText = () => {
     switch (status) {
       case 'generating':
-        return 'Creating VRF Proofs via Chainlink...';
+        return 'Creating fair random numbers...';
       case 'completed':
-        return 'VRF Proofs Successfully Created!';
+        return 'Random numbers successfully created!';
       case 'error':
-        return 'An Error Occurred';
+        return 'An error occurred';
       default:
-        return 'VRF Proof System';
+        return 'Fair Random Number Generator';
     }
   };
+
+  // Create custom Alert component to fix React 19 ref warning
+  const CustomAlert = forwardRef((props, ref) => {
+    return <Alert {...props} />;
+  });
 
   return (
     <Dialog 
@@ -265,7 +270,7 @@ export default function VRFPregenerationModal({ open, onClose }) {
             WebkitTextFillColor: 'transparent',
             fontWeight: 'bold'
           }}>
-            VRF Proof System
+            Fair Random Number Generator
           </Typography>
         </Box>
         <Button
@@ -303,24 +308,23 @@ export default function VRFPregenerationModal({ open, onClose }) {
               mb: 3
             }}>
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', mb: 2, fontSize: '1rem' }}>
-                <strong>🎯 Treasury Contract System:</strong> When you click this button, a contract will be automatically signed with our treasury address and 200 VRF proofs will be created via Chainlink VRF.
+                <strong>🎮 What This Does:</strong> Clicking this button creates 200 random numbers that will be used for fair gameplay. These random numbers are created by Chainlink, which is a trusted outside service that no one can cheat.
               </Typography>
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', fontSize: '1rem' }}>
-                <strong>📊 Proof Distribution:</strong> MINES (50), PLINKO (50), ROULETTE (50), WHEEL (50)
+                <strong>📊 How They're Used:</strong> 50 random numbers for each game: Mines, Plinko, Roulette, and Wheel
               </Typography>
               
-              {/* Network Configuration Info */}
+              {/* Technical Details - Simplified */}
               <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(139, 35, 152, 0.2)', borderRadius: '8px' }}>
                 <Typography variant="subtitle2" sx={{ color: '#8B2398', mb: 1, fontWeight: 'bold' }}>
-                  Network Configuration:
+                  Technical Details:
                 </Typography>
                 {(() => {
                   const { network, contractAddress, treasuryAddress } = getNetworkInfo();
                   return (
                     <Box sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)' }}>
-                      <div>🌐 Network: {network.toUpperCase()}</div>
-                      <div>📋 Contract: {contractAddress.slice(0, 10)}...{contractAddress.slice(-8)}</div>
-                      <div>🏦 Treasury: {treasuryAddress.slice(0, 10)}...{treasuryAddress.slice(-8)}</div>
+                      <div>🌐 Blockchain: {network.toUpperCase()} (where the random numbers are stored)</div>
+                      <div>🔒 Security: All random numbers can be verified by anyone</div>
                     </Box>
                   );
                 })()}
@@ -346,7 +350,7 @@ export default function VRFPregenerationModal({ open, onClose }) {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}>
-              Current Proof Status
+              Available Random Numbers
             </Typography>
             <Grid container spacing={2}>
               {Object.entries(proofStats).map(([game, count]) => (
@@ -422,18 +426,18 @@ export default function VRFPregenerationModal({ open, onClose }) {
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', mb: 2, fontSize: '1rem' }}>
-                {targetAmount} VRF proofs have been successfully created via Chainlink VRF!
+                {targetAmount} fair random numbers have been successfully created! These will be used to make sure all games are fair.
               </Typography>
               
               {/* Transaction Details */}
               {transactionHash && (
                 <Box sx={{ mb: 3, p: 2, bgcolor: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px' }}>
                   <Typography variant="subtitle2" sx={{ color: '#10B981', mb: 1, fontWeight: 'bold' }}>
-                    Transaction Details:
+                    Blockchain Records:
                   </Typography>
                   <Box sx={{ mb: 2 }}>
                     <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', mb: 1 }}>
-                      <strong>Multiple Transactions:</strong> VRF proofs were generated across 4 separate transactions:
+                      <strong>Verification Links:</strong> You can check these links to verify the random numbers on the blockchain:
                     </Typography>
                     {requestIds && requestIds.length > 0 && (
                       <Box sx={{ mt: 1 }}>
@@ -493,10 +497,10 @@ export default function VRFPregenerationModal({ open, onClose }) {
               {requestIds && requestIds.length > 0 && (
                 <Box sx={{ mb: 3, p: 2, bgcolor: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px' }}>
                   <Typography variant="subtitle2" sx={{ color: '#10B981', mb: 1, fontWeight: 'bold' }}>
-                    VRF Request IDs Generated: {requestIds ? requestIds.length : 0}
+                    Random Numbers Created: {requestIds ? requestIds.length : 0}
                   </Typography>
                   <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>
-                    These proofs are now stored locally and will be available for games.
+                    These random numbers are now ready to use in your games.
                   </Typography>
                 </Box>
               )}
@@ -504,20 +508,20 @@ export default function VRFPregenerationModal({ open, onClose }) {
               <Divider sx={{ my: 2, borderColor: 'rgba(16, 185, 129, 0.3)' }} />
               
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', mb: 2, fontSize: '1rem' }}>
-                <strong>How it works:</strong>
+                <strong>What happens next:</strong>
               </Typography>
               <Box sx={{ pl: 2 }}>
                 <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', mb: 1, fontSize: '0.9rem' }}>
-                  • 200 VRF proofs requested via Chainlink VRF contract
+                  • The random numbers are now ready to use in games
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', mb: 1, fontSize: '0.9rem' }}>
-                  • Proofs stored locally for immediate game use
+                  • Each time you play a game, one random number is used
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', mb: 1, fontSize: '0.9rem' }}>
-                  • When a game is played, a proof is consumed and shown to user
+                  • You can see the random number used for your game in the game history
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem' }}>
-                  • Automatic refill when any game type drops below 25 proofs
+                  • More random numbers are created automatically when needed
                 </Typography>
               </Box>
             </Paper>
@@ -537,17 +541,29 @@ export default function VRFPregenerationModal({ open, onClose }) {
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', fontSize: '1rem', mb: 2 }}>
-                An error occurred while creating VRF proofs:
+                Something went wrong while creating random numbers:
               </Typography>
               {errorMessage && (
                 <Box sx={{ p: 2, bgcolor: 'rgba(239, 68, 68, 0.2)', borderRadius: '8px', mb: 2 }}>
-                  <Typography variant="body2" sx={{ color: '#EF4444', fontSize: '0.9rem', fontFamily: 'monospace' }}>
+                  <Typography variant="body2" sx={{ color: '#EF4444', fontSize: '0.9rem', whiteSpace: 'pre-line' }}>
                     {errorMessage}
                   </Typography>
                 </Box>
               )}
+              {errorMessage && errorMessage.includes('Treasury needs more ARB ETH funds') && (
+                <Box sx={{ p: 2, bgcolor: 'rgba(255, 193, 7, 0.2)', borderRadius: '8px', mb: 2, border: '1px solid rgba(255, 193, 7, 0.3)' }}>
+                  <Typography variant="body2" sx={{ color: '#FFC107', fontSize: '0.9rem', fontWeight: 'bold', mb: 1 }}>
+                    💡 How to fix this:
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.85rem' }}>
+                    1. We need to add more funds to the system<br/>
+                    2. Please try again in a few minutes<br/>
+                    3. If the problem continues, contact support
+                  </Typography>
+                </Box>
+              )}
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem' }}>
-                Please check your wallet connection and try again. Make sure you have enough ETH for gas fees.
+                Please try again in a few moments. If the problem continues, our team will be notified automatically.
               </Typography>
             </Paper>
           )}
@@ -572,7 +588,7 @@ export default function VRFPregenerationModal({ open, onClose }) {
               py: 1.5
             }}
           >
-            Create VRF Proofs ({targetAmount})
+            Generate Fair Random Numbers ({targetAmount})
           </Button>
         )}
         
@@ -604,21 +620,25 @@ export default function VRFPregenerationModal({ open, onClose }) {
               py: 1.5
             }}
           >
-            Try Again
+            Try Again Later
           </Button>
         )}
       </DialogActions>
 
-      <Snackbar
-        open={showSnackbar}
-        autoHideDuration={6000}
-        onClose={() => setShowSnackbar(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-      >
-        <Alert onClose={() => setShowSnackbar(false)} severity="success" sx={{ width: '100%' }}>
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
+      {showSnackbar && (
+        <Box sx={{ position: 'fixed', bottom: 16, left: 16, zIndex: 10000 }}>
+          <CustomAlert 
+            onClose={() => setShowSnackbar(false)} 
+            severity="success" 
+            sx={{ 
+              width: '100%',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.25)'
+            }}
+          >
+            {snackbarMessage}
+          </CustomAlert>
+        </Box>
+      )}
     </Dialog>
   );
 }
