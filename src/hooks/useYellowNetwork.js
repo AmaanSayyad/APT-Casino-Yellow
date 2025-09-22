@@ -18,6 +18,7 @@ export const useYellowNetwork = () => {
    */
   const initialize = useCallback(async () => {
     try {
+      if (isInitializing) return true;
       setIsInitializing(true);
       setError(null);
       
@@ -31,7 +32,7 @@ export const useYellowNetwork = () => {
       setIsInitializing(false);
       return false;
     }
-  }, []);
+  }, [isInitializing]);
 
   /**
    * Connect to Yellow Network with user credentials
@@ -44,11 +45,14 @@ export const useYellowNetwork = () => {
       
       if (result) {
         setIsConnected(true);
-        setChannelId(channelId);
-        
-        // Get initial balance
-        const balance = await yellowNetworkService.getChannelBalance();
-        setBalance(balance);
+        if (channelId) setChannelId(channelId);
+        // Defer balance fetch to avoid blocking UI
+        setTimeout(async () => {
+          try {
+            const b = await yellowNetworkService.getChannelBalance();
+            setBalance(b);
+          } catch (e) {}
+        }, 0);
       }
       
       return result;

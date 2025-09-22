@@ -13,17 +13,21 @@ class YellowNetworkService {
   constructor() {
     this.client = null;
     this.isConnected = false;
+    this.isConnecting = false;
     this.channelId = null;
     this.sessionId = null;
     this.gameType = null;
     this.connectionRetries = 0;
-    this.maxRetries = 5;
+    this.maxRetries = 2;
     this.selectedToken = DEFAULT_CASINO_TOKEN;
     this.channelBalance = '0';
     this.selectedTestnet = 'arbitrum-sepolia'; // Default to Arbitrum Sepolia
     // Managed service connection (optional)
     this.autoConnectToken = process.env.YELLOW_SERVICE_ACCESS_TOKEN || null;
     this.defaultChannelId = process.env.YELLOW_DEFAULT_CHANNEL_ID || null;
+    // single-flight promises
+    this.initializingPromise = null;
+    this.connectingPromise = null;
   }
 
   /**
@@ -32,32 +36,36 @@ class YellowNetworkService {
    */
   async isReady() {
     try {
-      // Initialize if not already done
+      // Kick off initialize in background if needed
       if (!this.client) {
-        await this.initialize();
-      }
-      
-      // For development, try to connect automatically
-      if (!this.isConnected && process.env.NODE_ENV === 'development') {
-        try {
-          await this.connect();
-        } catch (connectError) {
-          console.warn('⚠️  Auto-connect failed, but client is available:', connectError.message);
+        if (!this.initializingPromise) {
+          this.initializingPromise = this.initialize().finally(() => {
+            this.initializingPromise = null;
+          });
         }
+        // Not ready yet
+        return false;
       }
-      
-      // Check if we have a working client
+
+      // If client exists but not connected, start background connect once
+      if (!this.isConnected && !this.isConnecting && !this.connectingPromise && process.env.NEXT_PUBLIC_YELLOW_NETWORK_ENABLED !== 'false') {
+        this.connectingPromise = this.connect().finally(() => {
+          this.connectingPromise = null;
+        });
+      }
+
+      // Consider client presence as "ready" for UI to show Connecting instead of Disconnected
       const hasClient = this.client !== null;
-      const isConnectedOrDev = this.isConnected || process.env.NODE_ENV === 'development';
-      
+      const ready = hasClient;
+
       console.log('🟡 YELLOW NETWORK: Readiness check', {
         hasClient,
         isConnected: this.isConnected,
         isDevelopment: process.env.NODE_ENV === 'development',
-        ready: hasClient && isConnectedOrDev
+        ready
       });
-      
-      return hasClient && isConnectedOrDev;
+
+      return ready;
     } catch (error) {
       console.error('❌ Yellow Network ERC-7824 readiness check failed:', error);
       return false;
@@ -101,119 +109,89 @@ class YellowNetworkService {
    * Initialize the Yellow Network service
    */
   async initialize() {
-    try {
-      console.log('🟡 YELLOW NETWORK: Initializing ERC-7824 Nitrolite client...');
-      console.log('🔗 Connecting to Clearnode Testnet:', process.env.CLEARNODE_TESTNET_WS_URL || CLEARNODE_TESTNET_CONFIG.clearNodeUrl);
-      
-      // Create Arbitrum Sepolia client for on-chain operations
-      const arbitrumClient = createPublicClient({
-        chain: arbitrumSepolia,
-        transport: http(process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC || 'https://sepolia-rollup.arbitrum.io/rpc')
-      });
-      
-      console.log('🔗 Primary Network: Arbitrum Sepolia (Chain ID: 421614)');
-      console.log('🟡 Yellow Network: Clearnode Testnet for state channels');
-      
-      // Get wallet client from window.ethereum if available
-      let walletClient = null;
-      if (typeof window !== 'undefined' && window.ethereum) {
-        try {
-          // Create a simple wallet client for Yellow Network
-          walletClient = {
-            account: window.ethereum.selectedAddress,
-            chain: { id: 421614 }, // Arbitrum Sepolia
-            transport: { url: 'https://sepolia-rollup.arbitrum.io/rpc' }
-          };
-        } catch (error) {
-          console.warn('⚠️  Could not create wallet client:', error);
-        }
-      }
-      
-      // Create REAL Nitrolite client connecting to Yellow Network Clearnode
-      // Following ERC-7824 standard for state channels
-      // Documentation: https://docs.yellow.org/ and https://erc7824.org/
-      
-      // Yellow Network ERC-7824 Testnet Contract Addresses
-      // These are the official Yellow Network testnet contracts
-      const YELLOW_ERC7824_ADDRESSES = {
-        // ERC-7824 Nitrolite contracts on Arbitrum Sepolia
-        custody: process.env.YELLOW_CUSTODY_ADDRESS || '0x0000000000000000000000000000000000000000',
-        adjudicator: process.env.YELLOW_ADJUDICATOR_ADDRESS || '0x0000000000000000000000000000000000000000',
-        guestAddress: process.env.YELLOW_GUEST_ADDRESS || walletClient?.account || '0x0000000000000000000000000000000000000000',
-      };
-      
-      console.log('🟡 YELLOW NETWORK: Initializing ERC-7824 Nitrolite Client...');
-      console.log('📚 Documentation: https://docs.yellow.org/');
-      console.log('🔗 ERC-7824 Standard: https://erc7824.org/');
-      
-      this.client = new NitroliteClient({
-        // Yellow Network Clearnode Testnet WebSocket
-        url: process.env.CLEARNODE_TESTNET_WS_URL || CLEARNODE_TESTNET_CONFIG.clearNodeUrl,
-        
-        // Enable debug mode for development
-        debug: process.env.NODE_ENV === 'development',
-        
-        // Arbitrum Sepolia as settlement layer
-        publicClient: arbitrumClient,
-        walletClient: walletClient,
-        
-        // ERC-7824 State Channel Configuration
-        challengeDuration: 86400, // 24 hours challenge period
-        chainId: 421614, // Arbitrum Sepolia
-        
-        // ERC-7824 Contract Addresses
-        addresses: YELLOW_ERC7824_ADDRESSES,
-      });
-      
-      // Test the connection to Yellow Network
-      console.log('🟡 YELLOW NETWORK: Testing connection to Clearnode Testnet...');
-      console.log('🔗 WebSocket URL:', process.env.CLEARNODE_TESTNET_WS_URL || 'wss://testnet.clearnode.yellow.org/ws');
-      console.log('🏗️  Contract Addresses:', {
-        custody: this.client.addresses?.custody,
-        adjudicator: this.client.addresses?.adjudicator,
-        guestAddress: this.client.addresses?.guestAddress
-      });
-      
-      // Check if Yellow Network is enabled
-      if (process.env.NEXT_PUBLIC_YELLOW_NETWORK_ENABLED === 'false') {
-        throw new Error('Yellow Network disabled in environment');
-      }
-      
-      // Try to establish a test connection
+    if (this.client) return true;
+    if (this.initializingPromise) return this.initializingPromise;
+    // single-flight promise
+    this.initializingPromise = (async () => {
       try {
-        // Test connection with a simple ping or health check
-        console.log('🔄 YELLOW NETWORK: Attempting real connection...');
-        // Note: We'll handle connection in the connect() method
-        console.log('✅ YELLOW NETWORK: Real service initialized successfully');
-        // Auto-connect using service token if provided (managed channels)
-        if (process.env.NEXT_PUBLIC_YELLOW_NETWORK_ENABLED !== 'false' && this.autoConnectToken) {
-          console.log('🟡 YELLOW NETWORK: Auto-connecting with service token...');
+        console.log('🟡 YELLOW NETWORK: Initializing ERC-7824 Nitrolite client...');
+        console.log('🔗 Connecting to Clearnode Testnet:', process.env.CLEARNODE_TESTNET_WS_URL || CLEARNODE_TESTNET_CONFIG.clearNodeUrl);
+
+        // Create Arbitrum Sepolia client for on-chain operations
+        const arbitrumClient = createPublicClient({
+          chain: arbitrumSepolia,
+          transport: http(process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC || 'https://sepolia-rollup.arbitrum.io/rpc')
+        });
+
+        console.log('🔗 Primary Network: Arbitrum Sepolia (Chain ID: 421614)');
+        console.log('🟡 Yellow Network: Clearnode Testnet for state channels');
+
+        // Get wallet client from window.ethereum if available
+        let walletClient = null;
+        if (typeof window !== 'undefined' && window.ethereum) {
           try {
-            await this.connect(this.defaultChannelId, this.autoConnectToken);
-            console.log('✅ YELLOW NETWORK: Auto-connected using service credentials');
-          } catch (autoErr) {
-            console.warn('⚠️  YELLOW NETWORK: Auto-connect failed, will proceed without it:', autoErr?.message || autoErr);
+            walletClient = {
+              account: window.ethereum.selectedAddress,
+              chain: { id: 421614 },
+              transport: { url: 'https://sepolia-rollup.arbitrum.io/rpc' }
+            };
+          } catch (error) {
+            console.warn('⚠️  Could not create wallet client:', error);
           }
         }
+
+        const YELLOW_ERC7824_ADDRESSES = {
+          custody: process.env.YELLOW_CUSTODY_ADDRESS || '0x0000000000000000000000000000000000000000',
+          adjudicator: process.env.YELLOW_ADJUDICATOR_ADDRESS || '0x0000000000000000000000000000000000000000',
+          guestAddress: process.env.YELLOW_GUEST_ADDRESS || walletClient?.account || '0x0000000000000000000000000000000000000000',
+        };
+
+        console.log('🟡 YELLOW NETWORK: Initializing ERC-7824 Nitrolite Client...');
+        console.log('📚 Documentation: https://docs.yellow.org/');
+        console.log('🔗 ERC-7824 Standard: https://erc7824.org/');
+
+        this.client = new NitroliteClient({
+          url: process.env.CLEARNODE_TESTNET_WS_URL || CLEARNODE_TESTNET_CONFIG.clearNodeUrl,
+          debug: process.env.NODE_ENV === 'development',
+          publicClient: arbitrumClient,
+          walletClient: walletClient,
+          challengeDuration: 86400,
+          chainId: 421614,
+          addresses: YELLOW_ERC7824_ADDRESSES,
+        });
+
+        console.log('🟡 YELLOW NETWORK: Testing connection to Clearnode Testnet...');
+        console.log('🔗 WebSocket URL:', process.env.CLEARNODE_TESTNET_WS_URL || 'wss://testnet.clearnode.yellow.org/ws');
+        console.log('🏗️  Contract Addresses:', {
+          custody: this.client.addresses?.custody,
+          adjudicator: this.client.addresses?.adjudicator,
+          guestAddress: this.client.addresses?.guestAddress
+        });
+
+        if (process.env.NEXT_PUBLIC_YELLOW_NETWORK_ENABLED === 'false') {
+          throw new Error('Yellow Network disabled in environment');
+        }
+
+        console.log('✅ YELLOW NETWORK: Client initialized');
+        if (process.env.NEXT_PUBLIC_YELLOW_NETWORK_ENABLED !== 'false' && this.autoConnectToken && !this.isConnected) {
+          this.connect(this.defaultChannelId, this.autoConnectToken).catch(() => {});
+        }
         return true;
-      } catch (connectionError) {
-        console.error('❌ YELLOW NETWORK: Connection test failed:', connectionError);
-        throw connectionError;
-      }
-      
-    } catch (error) {
-      console.error('❌ YELLOW NETWORK: Service initialization failed:', error);
-      
-      // Only use fallback in development mode
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('⚠️  YELLOW NETWORK: Using fallback client for development...');
-        console.warn('⚠️  To use real Yellow Network, ensure proper configuration and network access');
-        this.createFallbackClient();
-        return true;
-      } else {
-        // In production, require real Yellow Network connection
+      } catch (error) {
+        console.error('❌ YELLOW NETWORK: Service initialization failed:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('⚠️  YELLOW NETWORK: Using fallback client for development...');
+          console.warn('⚠️  To use real Yellow Network, ensure proper configuration and network access');
+          this.createFallbackClient();
+          return true;
+        }
         throw new Error('Yellow Network connection required but failed to initialize');
       }
+    })();
+    try {
+      return await this.initializingPromise;
+    } finally {
+      this.initializingPromise = null;
     }
   }
   
@@ -263,11 +241,15 @@ class YellowNetworkService {
    * @param {string} accessToken - Optional access token for authentication
    */
   async connect(channelId = null, accessToken = null) {
+    if (this.isConnected) return true;
+    if (this.isConnecting && this.connectingPromise) return this.connectingPromise;
     if (!this.client) {
       await this.initialize();
     }
 
-    try {
+    this.isConnecting = true;
+    this.connectingPromise = (async () => {
+      try {
       console.log('🟡 YELLOW NETWORK: Establishing ERC-7824 connection...');
       console.log('📚 Following Yellow Network docs: https://docs.yellow.org/');
       
@@ -278,21 +260,8 @@ class YellowNetworkService {
         console.log(`🔑 Access Token: Provided`);
       }
       
-      // NitroliteClient doesn't have a connect method - it's ready after initialization
-      // Check if we can get account balance to verify connection
-      if (typeof this.client.getAccountBalance === 'function') {
-        try {
-          console.log('🟡 YELLOW NETWORK: Testing connection with account balance check...');
-          const balance = await this.client.getAccountBalance();
-          console.log('✅ YELLOW NETWORK: Account balance retrieved:', balance);
-        } catch (contractError) {
-          // Suppress noisy fallback logs now that contracts are deployed
-          console.log('🟡 YELLOW NETWORK: Proceeding without account balance check');
-        }
-      } else {
-        // For development/fallback client, just set connection state
-        console.log('🟡 YELLOW NETWORK: Using connection without balance probe');
-      }
+      // NitroliteClient is ready post-initialize; avoid heavy probes on first connect
+      console.log('🟡 YELLOW NETWORK: Skipping balance probe on first connect');
       
       this.channelId = channelId || `auto_${Date.now()}`;
       this.isConnected = true;
@@ -315,6 +284,14 @@ class YellowNetworkService {
       }
       
       throw error;
+    } finally {
+      this.isConnecting = false;
+    }
+    })();
+    try {
+      return await this.connectingPromise;
+    } finally {
+      this.connectingPromise = null;
     }
   }
 
