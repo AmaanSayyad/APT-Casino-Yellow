@@ -98,10 +98,11 @@ flowchart TB
     Custody[Custody Contract]
   end
 
-  Svc -->|depositTokens(amount, token)| Custody
-  Custody -->|credit channel balance| Svc
-  Svc -->|withdrawTokens(amount, token)| Custody
+  Svc -->|depositTokens| Custody
+  Custody -->|credit balance| Svc
+  Svc -->|withdrawTokens| Custody
   Custody -->|transfer to wallet| Svc
+  %% Note: params omitted in labels for GitHub Mermaid compatibility
 ```
 
 ## ⚖️ Dispute & Settlement (High-Level)
