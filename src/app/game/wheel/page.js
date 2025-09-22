@@ -15,9 +15,11 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setBalance, setLoading, loadBalanceFromStorage } from '@/store/balanceSlice';
 import { useNotification } from '@/components/NotificationSystem';
 import useWalletStatus from '@/hooks/useWalletStatus';
-import vrfProofService from '@/services/VRFProofService';
-import VRFProofRequiredModal from '@/components/VRF/VRFProofRequiredModal';
-import vrfLogger from '@/services/VRFLoggingService';
+// Chainlink VRF artifacts removed in Yellow integration
+// import vrfProofService from '@/services/VRFProofService';
+// import VRFProofRequiredModal from '@/components/VRF/VRFProofRequiredModal';
+// import vrfLogger from '@/services/VRFLoggingService';
+import yellowNetworkService from '@/services/YellowNetworkService';
 
 // Import new components
 import WheelVideo from "./components/WheelVideo";
@@ -92,19 +94,26 @@ export default function Home() {
     }
 
     // Check if VRF proofs are available for this game
+    // VRF check removed; Yellow SDK randomness will be used
+
+    // Ensure Yellow is connected and session exists
     try {
-      const vrfStats = vrfProofService.getProofStats();
-      const availableProofs = vrfStats.availableVRFs.WHEEL || 0;
-      
-      if (availableProofs <= 0) {
-        setShowVRFModal(true);
+      let ready = await yellowNetworkService.isReady();
+      if (!ready) {
+        await yellowNetworkService.initialize();
+        await yellowNetworkService.connect();
+        ready = await yellowNetworkService.isReady();
+      }
+      if (!ready) {
+        notification.error('Yellow Network not ready');
         return;
       }
-      
-      console.log(`✅ Wheel game allowed: ${availableProofs} VRF proofs available`);
-    } catch (error) {
-      console.error('❌ Error checking VRF proof availability:', error);
-      alert('❌ Error checking VRF proof availability. Please try again.');
+      if (!yellowNetworkService.sessionId) {
+        const session = await yellowNetworkService.createGameSession('WHEEL', { risk, segments: noOfSegments });
+        console.log('🟡 YELLOW SDK: WHEEL session created:', session);
+      }
+    } catch (e) {
+      notification.error('Yellow connection failed');
       return;
     }
 
@@ -132,14 +141,14 @@ export default function Home() {
       console.log('Balance deducted. New balance:', parseFloat(newBalance).toFixed(5), 'ETH');
       
       // Set up callback to handle wheel animation completion
-      window.wheelBetCallback = (landedMultiplier) => {
+      window.wheelBetCallback = async (landedMultiplier) => {
         console.log('🎯 Wheel animation completed with multiplier:', landedMultiplier);
         
         // Stop spinning immediately when animation completes
         setIsSpinning(false);
         
         // Wait a moment for color detection to update, then get the REAL result
-        setTimeout(() => {
+        setTimeout(async () => {
           let actualMultiplier = 0;
           let detectedColor = "#333947";
           
@@ -173,26 +182,18 @@ export default function Home() {
             color: detectedColor
           };
 
-          // Consume VRF proof for this game
+          // Consume Yellow randomness for this game
           try {
-            const vrfResult = vrfProofService.generateRandomFromProof('WHEEL');
-            console.log('🎲 Wheel game completed, VRF proof consumed:', vrfResult);
-            
-            // Add VRF proof info to the history item
-            newHistoryItem.vrfProof = {
-              proofId: vrfResult.proofId,
-              transactionHash: vrfResult.transactionHash,
-              logIndex: vrfResult.logIndex,
-              requestId: vrfResult.requestId,
-              randomNumber: vrfResult.randomNumber
+            const y = await yellowNetworkService.generateRandom({ purpose: 'wheel_spin', gameType: 'WHEEL' });
+            console.log('🟡 YELLOW SDK: WHEEL randomness:', y);
+            newHistoryItem.yellowProof = {
+              sessionId: y.sessionId,
+              randomValue: y.randomValue,
+              randomNumber: y.randomNumber,
+              timestamp: y.timestamp
             };
-            
-            // Log proof consumption
-            const stats = vrfProofService.getProofStats();
-            console.log(`📊 VRF Proof Stats after Wheel game:`, stats);
-            
           } catch (error) {
-            console.error('❌ Error consuming VRF proof for Wheel game:', error);
+            console.error('❌ Yellow randomness failed for Wheel:', error);
           }
 
           setGameHistory(prev => [newHistoryItem, ...prev]);
@@ -687,13 +688,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* VRF Proof Required Modal */}
-      <VRFProofRequiredModal
-        open={showVRFModal}
-        onClose={() => setShowVRFModal(false)}
-        gameType="WHEEL"
-        onGenerateProofs={() => setShowVRFModal(false)}
-      />
+      {/* VRF modal removed for Yellow-only mode */}
     </div>
   );
 }

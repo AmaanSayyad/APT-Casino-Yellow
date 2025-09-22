@@ -1,13 +1,13 @@
 {
   "network": "arbitrum-sepolia",
   "contractName": "YellowCasino",
-  "contractAddress": "0xa2f56bf61c147E3F2F49f7b7b203e62e08989CB3",
+  "contractAddress": "0xe7258D580Ca08EE0b6c97c7a9bD4E16BBEbf1Ef6",
   "treasuryAddress": "0xb424d2369F07b925D1218B08e56700AF5928287b",
   "deployerAddress": "0xb424d2369F07b925D1218B08e56700AF5928287b",
-  "transactionHash": "0xd52304e9d30465138717f46ed57f385e26c251f34f52d258d7adecefdff345e6",
-  "blockNumber": 196928735,
-  "gasUsed": "1850872",
-  "timestamp": "2025-09-22T11:26:11.148Z",
+  "transactionHash": "0x518e272d00e32d372f5ec042a53d2dedddbf49ee1113f11cfc9122857550ad61",
+  "blockNumber": 196962980,
+  "gasUsed": "1850874",
+  "timestamp": "2025-09-22T13:52:37.100Z",
   "houseEdge": "270",
   "minBet": "1000000000000000",
   "maxBet": "10000000000000000000"

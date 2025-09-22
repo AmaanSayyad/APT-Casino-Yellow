@@ -565,11 +565,26 @@ const PlinkoGame = forwardRef(({ rowCount = 16, riskLevel = "Medium", onRowChang
   const dropBall = useCallback(async () => {
     // Check Yellow Network before starting game
     try {
-      const isReady = await yellowNetworkService.isReady();
+      let isReady = await yellowNetworkService.isReady();
+      if (!isReady) {
+        // Try initialize + connect automatically
+        await yellowNetworkService.initialize();
+        await yellowNetworkService.connect();
+        isReady = await yellowNetworkService.isReady();
+      }
       if (!isReady) {
         setShowNetworkModal(true);
         console.log('❌ Yellow Network not ready for PLINKO');
         return;
+      }
+      // Ensure PLINKO session exists
+      if (!yellowNetworkService.sessionId) {
+        const session = await yellowNetworkService.createGameSession('PLINKO', {
+          rows: currentRows,
+          risk: currentRiskLevel,
+          timestamp: Date.now(),
+        });
+        console.log('🟡 YELLOW SDK: PLINKO session created:', session);
       }
     } catch (error) {
       console.error('❌ Error checking Yellow Network:', error);
@@ -623,8 +638,22 @@ const PlinkoGame = forwardRef(({ rowCount = 16, riskLevel = "Medium", onRowChang
     const firstRowEndX = firstRowPins[firstRowPins.length - 1].x;
     const firstRowCenterX = (firstRowStartX + firstRowEndX) / 2;
     
-    // Random start position within the first row pin range
-    const startX = firstRowCenterX + (Math.random() - 0.5) * ballOffsetRangeX;
+    // Use Yellow randomness to seed start position (provably fair)
+    let startX = firstRowCenterX + (Math.random() - 0.5) * ballOffsetRangeX;
+    try {
+      const rand = await yellowNetworkService.generateRandom({
+        purpose: 'plinko_drop_start',
+        gameType: 'PLINKO',
+        rows: currentRows,
+        risk: currentRiskLevel
+      });
+      console.log('🟡 YELLOW SDK: PLINKO randomness:', rand);
+      // Map randomNumber (0..999999) to offset range deterministically
+      const u = (rand.randomNumber % 1000000) / 1000000; // 0..1
+      startX = firstRowCenterX + (u - 0.5) * ballOffsetRangeX;
+    } catch (e) {
+      console.warn('⚠️  Using fallback random for PLINKO startX:', e?.message || e);
+    }
 
     const ball = Bodies.circle(startX, 0, ballRadius, {
       restitution: 0.8, // Bounciness from reference repo

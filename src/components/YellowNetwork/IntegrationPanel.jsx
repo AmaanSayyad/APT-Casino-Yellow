@@ -3,8 +3,8 @@ import ChannelManager from './ChannelManager';
 import GameSessionManager from './GameSessionManager';
 import ConnectionStatus from './ConnectionStatus';
 import useYellowNetwork from '@/hooks/useYellowNetwork';
-import useYellowVRF from '@/hooks/useYellowVRF';
 import Button from '@/components/Button';
+import yellowNetworkService from '@/services/YellowNetworkService';
 
 /**
  * Yellow Network Integration Panel Component
@@ -17,7 +17,10 @@ const IntegrationPanel = ({ gameType = 'MINES' }) => {
   
   // Hooks
   const { isConnected, balance } = useYellowNetwork();
-  const { vrfCounts, isGenerating, generateProofs } = useYellowVRF();
+  
+  // VRF state - using Yellow Network SDK directly
+  const [vrfCounts, setVrfCounts] = useState({ MINES: 0, ROULETTE: 0, PLINKO: 0 });
+  const [isGenerating, setIsGenerating] = useState(false);
   
   // Handle VRF generation
   const handleGenerateVRF = async () => {
@@ -26,11 +29,24 @@ const IntegrationPanel = ({ gameType = 'MINES' }) => {
       return;
     }
     
+    setIsGenerating(true);
     try {
-      await generateProofs(gameType, 10);
+      // Use Yellow Network SDK for VRF generation
+      const result = await yellowNetworkService.generateRandomness(gameType, 10);
+      console.log(`Generated VRF proofs for ${gameType}:`, result);
+      
+      // Update VRF counts
+      setVrfCounts(prev => ({
+        ...prev,
+        [gameType]: (prev[gameType] || 0) + 10
+      }));
+      
+      alert(`Successfully generated 10 VRF proofs for ${gameType}`);
     } catch (error) {
       console.error(`Failed to generate VRF proofs for ${gameType}:`, error);
       alert(`Failed to generate VRF proofs: ${error.message}`);
+    } finally {
+      setIsGenerating(false);
     }
   };
   

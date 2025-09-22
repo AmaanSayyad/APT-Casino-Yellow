@@ -22,7 +22,9 @@
     "db:migrate": "node scripts/run-migrations.js migrate",
     "db:status": "node scripts/run-migrations.js status",
     "db:rollback": "node scripts/run-migrations.js rollback",
-    "test:vrf-logging": "node scripts/test-vrf-logging.js"
+    "test:vrf-logging": "node scripts/test-vrf-logging.js",
+    "faucet:sandbox": "node scripts/request-sandbox-faucet.js",
+    "fund:yellow-casino": "node scripts/fund-yellow-casino.js"
   },
   "dependencies": {
     "@babel/runtime": "^7.24.0",

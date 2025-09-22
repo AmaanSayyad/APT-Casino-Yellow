@@ -71,8 +71,8 @@ export const YELLOW_CANARY_BRIDGE = {
 // Yellow Network Clearnode Testnet configuration
 // This provides state channels for gasless gaming while using Arbitrum Sepolia for settlement
 export const CLEARNODE_TESTNET_CONFIG = {
-  clearNodeUrl: 'wss://testnet.clearnode.yellow.org/ws',
-  apiUrl: 'https://testnet.clearnode.yellow.org/api',
+  clearNodeUrl: 'wss://clearnet-sandbox.yellow.com/ws',
+  apiUrl: 'https://clearnet-sandbox.yellow.com',
   
   // Primary settlement network
   primaryNetwork: 'arbitrum-sepolia',

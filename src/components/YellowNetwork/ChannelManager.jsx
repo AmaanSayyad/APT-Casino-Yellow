@@ -40,61 +40,66 @@ const ChannelManager = ({ onChannelConnected }) => {
     }
   }, []);
   
-  // Auto-connect to channel if ID is available
+  // Auto-connect when wallet is connected
   useEffect(() => {
     const autoConnect = async () => {
       if (
         isWalletConnected &&
         address &&
-        channelId &&
         !isChannelConnected &&
         !isConnecting
       ) {
-        await handleConnect();
+        await handleAutoConnect();
       }
     };
     
     autoConnect();
-  }, [isWalletConnected, address, channelId, isChannelConnected]);
+  }, [isWalletConnected, address, isChannelConnected]);
   
-  // Handle channel connection
-  const handleConnect = async () => {
-    if (!channelId) {
-      alert('Please enter a channel ID or create a new channel');
-      return;
-    }
-    
+  // Handle automatic connection
+  const handleAutoConnect = async () => {
     try {
       setIsConnecting(true);
       
-      // In a real implementation, you would get the access token from Yellow's auth service
-      // For this demo, we'll use the wallet address as a mock token
-      const mockAccessToken = `demo_token_${address}`;
+      // Check if we have a saved channel ID
+      let currentChannelId = channelId || localStorage.getItem('yellow_channel_id');
       
-      const result = await connect(channelId, mockAccessToken);
+      // If no channel ID, create one automatically
+      if (!currentChannelId) {
+        currentChannelId = await createAutoChannel();
+      }
+      
+      // Connect to the channel
+      const mockAccessToken = `demo_token_${address}`;
+      const result = await connect(currentChannelId, mockAccessToken);
       
       if (result) {
-        // Save channel ID to local storage
-        localStorage.setItem('yellow_channel_id', channelId);
+        setChannelId(currentChannelId);
+        localStorage.setItem('yellow_channel_id', currentChannelId);
         
-        // Get channel info
         setChannelInfo({
-          id: channelId,
+          id: currentChannelId,
           balance: balance || { available: '0.0' },
           status: 'active',
         });
         
-        // Notify parent component
         if (onChannelConnected) {
-          onChannelConnected(channelId);
+          onChannelConnected(currentChannelId);
         }
       }
     } catch (error) {
-      console.error('Failed to connect to channel:', error);
-      alert(`Failed to connect to channel: ${error.message}`);
+      console.error('Failed to auto-connect to channel:', error);
+      // Don't show alert for auto-connect failures, just log them
     } finally {
       setIsConnecting(false);
     }
+  };
+
+  // Create channel automatically
+  const createAutoChannel = async () => {
+    const autoChannelId = `auto_channel_${address.slice(2, 8)}_${Date.now().toString(36)}`;
+    console.log('Auto-creating channel:', autoChannelId);
+    return autoChannelId;
   };
   
   // Handle channel creation
@@ -177,51 +182,34 @@ const ChannelManager = ({ onChannelConnected }) => {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="flex flex-col space-y-2">
-            <label className="text-yellow-100/70 text-sm">Channel ID</label>
-            <input
-              type="text"
-              value={channelId}
-              onChange={(e) => setChannelId(e.target.value)}
-              placeholder="Enter your Yellow Network channel ID"
-              className="bg-black/30 border border-yellow-800/30 rounded-lg p-2 text-white"
-              disabled={isConnecting || isInitializing}
-            />
+          <div className="bg-black/30 p-4 rounded-lg text-center">
+            {isConnecting || isInitializing ? (
+              <div>
+                <div className="animate-spin w-8 h-8 border-2 border-yellow-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+                <p className="text-yellow-100/80">
+                  {isInitializing ? 'Initializing Yellow Network...' : 'Connecting to channel...'}
+                </p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-yellow-100/80 mb-3">
+                  Yellow Network will automatically create and connect to a state channel for gasless gaming.
+                </p>
+                <Button
+                  onClick={handleAutoConnect}
+                  className="w-full"
+                >
+                  Connect to Yellow Network
+                </Button>
+              </div>
+            )}
           </div>
           
-          <div className="flex flex-col md:flex-row gap-2">
-            <Button
-              onClick={handleConnect}
-              disabled={!channelId || isConnecting || isInitializing}
-              className="flex-1"
-            >
-              {isConnecting ? 'Connecting...' : 'Connect to Channel'}
-            </Button>
-            
-            <Button
-              onClick={redirectToYellowApps}
-              variant="secondary"
-              className="flex-1"
-              disabled={isCreatingChannel || isConnecting || isInitializing}
-            >
-              Create Channel on Yellow Apps
-            </Button>
-          </div>
-          
-          <div className="border-t border-yellow-800/30 pt-4 mt-4">
-            <p className="text-yellow-100/80 text-sm mb-2">
-              Don't have a Yellow Network channel yet?
-            </p>
-            <Button
-              onClick={handleCreateChannel}
-              variant="outline"
-              disabled={isCreatingChannel || isConnecting || isInitializing}
-              className="w-full"
-            >
-              {isCreatingChannel ? 'Creating Demo Channel...' : 'Create Demo Channel'}
-            </Button>
-            <p className="text-yellow-100/50 text-xs mt-2">
-              Note: This creates a demo channel for testing. For production, create a real channel on Yellow Apps.
+          <div className="border-t border-yellow-800/30 pt-4">
+            <p className="text-yellow-100/60 text-xs text-center">
+              State channels enable instant, gasless transactions for casino games.
+              <br />
+              For production use, visit <a href="https://apps.yellow.com" target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:text-yellow-300">apps.yellow.com</a>
             </p>
           </div>
         </div>

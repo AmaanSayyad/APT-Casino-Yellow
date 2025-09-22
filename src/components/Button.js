@@ -9,7 +9,7 @@ const TextButton = styled(LoadingButton)(({theme}) => ({
 	textTransform: 'none',
 	padding: '6px 18px',
 	'&:hover': {
-		color: theme.palette.text.accent,
+		color: theme.palette.primary.main,
 	},
 }))
 
@@ -24,6 +24,6 @@ export default function CustomButton({
 	...props
 }) {
 	return variant === 'outlined' ? 
-		<StyledButton variant={variant} color='accent' {...props} sx={{fontSize: fontSize, ...props.sx}} /> :
+		<StyledButton variant={variant} color='primary' {...props} sx={{fontSize: fontSize, ...props.sx}} /> :
 			<TextButton variant={variant} {...props} sx={{fontSize: fontSize, ...props.sx}}/>
 }

@@ -6,7 +6,8 @@ import Image from "next/image";
 import coin from "../../../public/coin.png";
 import useWalletStatus from '@/hooks/useWalletStatus';
 import { Shield } from "lucide-react";
-import vrfProofService from '@/services/VRFProofService';
+import yellowNetworkService from '@/services/YellowNetworkService';
+// VRF removed in Yellow-only mode
 // import { wheelDataByRisk } from "./GameWheel"; // Make sure this is exported
 
 const BettingPanel = ({
@@ -26,7 +27,7 @@ const BettingPanel = ({
   
   const { isConnected } = useWalletStatus();
   const [inputValue, setInputValue] = useState('0');
-  const [vrfProofCount, setVrfProofCount] = useState(0);
+  const [yellowReady, setYellowReady] = useState(false);
 
   const handleInputChange = (e) => {
     const value = e.target.value;
@@ -46,25 +47,20 @@ const BettingPanel = ({
   const [stopProfit, setStopProfit] = useState(0);
   const [stopLoss, setStopLoss] = useState(0);
 
-  // Update VRF proof count every 5 seconds
+  // Check Yellow SDK readiness periodically
   useEffect(() => {
-    const updateVrfProofCount = () => {
+    let cancelled = false;
+    const check = async () => {
       try {
-        const proofStats = vrfProofService.getProofStats();
-        setVrfProofCount(proofStats.availableVRFs.WHEEL || 0);
-      } catch (error) {
-        console.error('Error updating VRF proof count:', error);
-        setVrfProofCount(0);
+        const ready = await yellowNetworkService.isReady();
+        if (!cancelled) setYellowReady(!!ready);
+      } catch {
+        if (!cancelled) setYellowReady(false);
       }
     };
-
-    // Update immediately
-    updateVrfProofCount();
-
-    // Update every 5 seconds
-    const interval = setInterval(updateVrfProofCount, 5000);
-
-    return () => clearInterval(interval);
+    check();
+    const id = setInterval(check, 5000);
+    return () => { cancelled = true; clearInterval(id); };
   }, []);
 
   return (
@@ -85,15 +81,15 @@ const BettingPanel = ({
         </div>
       </div>
 
-      {/* VRF Proof Status */}
+      {/* Yellow SDK Status */}
       <div className="mb-4 p-3 bg-gradient-to-r from-purple-900/20 to-pink-900/20 rounded-lg border border-purple-800/30">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Shield size={16} className="text-purple-300" />
-            <span className="text-sm font-medium text-purple-300">VRF Proofs</span>
+            <span className="text-sm font-medium text-purple-300">Yellow SDK</span>
           </div>
-          {isConnected && vrfProofCount <= 0 && (
-            <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+          {isConnected && (
+            <div className={`w-2 h-2 rounded-full ${yellowReady ? 'bg-green-400' : 'bg-red-400'}`}></div>
           )}
         </div>
         
@@ -113,27 +109,16 @@ const BettingPanel = ({
             </button>
           </div>
         ) : (
-          <>
-            <div className="flex items-center justify-between">
-              <span className={`text-lg font-bold ${
-                vrfProofCount > 0 ? 'text-green-400' : 'text-red-400'
-              }`}>
-                {vrfProofCount} available
+          <div className="flex items-center justify-between">
+            <span className={`text-lg font-bold ${yellowReady ? 'text-green-400' : 'text-red-400'}`}>
+              {yellowReady ? 'Connected' : 'Not connected'}
+            </span>
+            {!yellowReady && (
+              <span className="text-xs text-red-400 bg-red-900/20 px-2 py-1 rounded">
+                Check Sandbox settings
               </span>
-              
-              {vrfProofCount <= 0 && (
-                <span className="text-xs text-red-400 bg-red-900/20 px-2 py-1 rounded">
-                  Generate proofs first!
-                </span>
-              )}
-            </div>
-            
-            {vrfProofCount > 0 && (
-              <div className="mt-2 text-xs text-purple-300">
-                Each game consumes 1 VRF proof
-              </div>
             )}
-          </>
+          </div>
         )}
       </div>
 

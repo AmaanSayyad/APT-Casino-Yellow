@@ -1,31 +1,14 @@
+"use client";
+
 import React, { useState } from 'react';
 import { AppBar, Toolbar, Container, Box, Button, Typography } from '@mui/material';
-import { Play, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import NetworkSwitcher from './NetworkSwitcher';
-import VRFPregenerationModal from './VRF/VRFPregenerationModal';
-import { useVRFPregeneration } from '../hooks/useVRFPregeneration';
 import { useAccount } from 'wagmi';
 
 const Navbar = () => {
   const { address, isConnected } = useAccount();
-  const [showVRFModal, setShowVRFModal] = useState(false);
-  const { vrfStatus, generateVRFBatch, isGenerating } = useVRFPregeneration();
-
-  const handleVRFButtonClick = () => {
-    if (isConnected && address) {
-      setShowVRFModal(true);
-    }
-  };
-
-  const handleVRFModalClose = () => {
-    setShowVRFModal(false);
-  };
-
-  const handleGenerateVRF = async () => {
-    if (address) {
-      await generateVRFBatch(address);
-    }
-  };
+  const [showVRFModal] = useState(false); // Placeholder retained to avoid layout changes
 
   return (
     <>
@@ -39,41 +22,14 @@ const Navbar = () => {
             </Box>
             
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              {isConnected && (
-                <Button
-                  variant="contained"
-                  startIcon={<Zap size={20} />}
-                  onClick={handleVRFButtonClick}
-                  sx={{
-                    backgroundColor: 'linear-gradient(45deg, #FF6B6B, #4ECDC4)',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    '&:hover': {
-                      backgroundColor: 'linear-gradient(45deg, #FF5252, #26A69A)',
-                    },
-                    borderRadius: '25px',
-                    px: 3,
-                    py: 1
-                  }}
-                >
-                  VRF Proof
-                </Button>
-              )}
+              {/* VRF button temporarily disabled until modal component is available */}
               <NetworkSwitcher />
             </Box>
           </Toolbar>
         </Container>
       </AppBar>
 
-      {/* VRF Modal */}
-      <VRFPregenerationModal
-        isOpen={showVRFModal}
-        onClose={handleVRFModalClose}
-        userAddress={address}
-        vrfStatus={vrfStatus}
-        onGenerateVRF={handleGenerateVRF}
-        isGenerating={isGenerating}
-      />
+      {/* VRF Modal placeholder removed */}
     </>
   );
 };

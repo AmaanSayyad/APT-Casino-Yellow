@@ -1,7 +1,7 @@
 import { Inter } from "next/font/google";
 import "@/styles/globals.css";
 import Providers from "./providers";
-import Navbar from "@/components/Navbar";
+import Navbar from "@/components/Navbar.js";
 import Footer from "@/components/Footer";
 import GlobalWalletManager from "@/components/GlobalWalletManager";
 
