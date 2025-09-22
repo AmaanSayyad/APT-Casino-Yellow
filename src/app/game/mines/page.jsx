@@ -268,8 +268,15 @@ export default function Mines() {
             channelId: yellowNetworkService.channelId || 'yellow_channel',
             valueEth: 0
           })
-        }).catch(() => {});
-      } catch {}
+        })
+          .then(async (r) => {
+            const t = await r.text().catch(() => '');
+            console.log('💣 Casino session log (Mines):', r.status, t);
+          })
+          .catch((e) => console.warn('Casino session log failed (Mines):', e));
+      } catch (e) {
+        console.warn('Casino session log threw (Mines):', e);
+      }
       
       // Log Yellow Network SDK stats
       console.log('📊 YELLOW SDK: Game completed successfully');

@@ -204,8 +204,15 @@ export default function Home() {
                   channelId: yellowNetworkService.channelId || 'yellow_channel',
                   valueEth: 0
                 })
-              }).catch(() => {});
-            } catch {}
+              })
+                .then(async (r) => {
+                  const t = await r.text().catch(() => '');
+                  console.log('🎡 Casino session log (Wheel):', r.status, t);
+                })
+                .catch((e) => console.warn('Casino session log failed (Wheel):', e));
+            } catch (e) {
+              console.warn('Casino session log threw (Wheel):', e);
+            }
           } catch (error) {
             console.error('❌ Yellow randomness failed for Wheel:', error);
           }

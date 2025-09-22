@@ -2063,8 +2063,15 @@ export default function GameRoulette() {
                 channelId: yellowNetworkService.channelId || 'yellow_channel',
                 valueEth: 0
               })
-            }).catch(() => {});
-          } catch {}
+            })
+              .then(async (r) => {
+                const t = await r.text().catch(() => '');
+                console.log('🎰 Casino session log (Roulette):', r.status, t);
+              })
+              .catch((e) => console.warn('Casino session log failed (Roulette):', e));
+          } catch (e) {
+            console.warn('Casino session log threw (Roulette):', e);
+          }
           
           // Settle bet using Yellow Network
           if (yellowNetworkService.sessionId) {
