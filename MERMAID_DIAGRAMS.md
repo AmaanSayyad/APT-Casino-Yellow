@@ -4,19 +4,19 @@
 
 ```mermaid
 flowchart LR
-  subgraph Client[Client (Next.js)]
+  subgraph Client
     UI[UI Components]
     Hook[useYellowNetwork]
     Svc[YellowNetworkService]
   end
 
-  subgraph Yellow[Yellow Network]
+  subgraph Yellow
     NL[Nitrolite Client]
     SC[ERC-7824 State Channel]
     CN[Clearnode]
   end
 
-  subgraph L2[Arbitrum Sepolia]
+  subgraph L2
     Custody[Custody Contract]
     Adjudicator[Adjudicator Contract]
   end
@@ -91,10 +91,10 @@ sequenceDiagram
 
 ```mermaid
 flowchart TB
-  subgraph App[App]
+  subgraph App
     Svc[YellowNetworkService]
   end
-  subgraph Chain[Arbitrum Sepolia]
+  subgraph Chain
     Custody[Custody Contract]
   end
 
@@ -129,7 +129,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart TB
-  subgraph UI[Game UI]
+  subgraph UI
     GM[Game Manager]
     Mines[Mines]
     Plinko[Plinko]
@@ -137,13 +137,13 @@ flowchart TB
     Wheel[Wheel]
   end
 
-  subgraph SDK[YellowNetworkService]
+  subgraph SDK
     Sess[createGameSession]
     Rand[generateRandom]
     Bet[placeBet/settleBet]
   end
 
-  subgraph Channel[ERC-7824 State Channel]
+  subgraph Channel
     Open[Open Session]
     Update[Off-chain State Updates]
     Close[Close Session]
@@ -234,14 +234,14 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-  subgraph Backend[Listener]
+  subgraph Backend
     L[Chain Listener]
   end
-  subgraph L2[Arbitrum Sepolia]
+  subgraph L2
     SessTx[Session Registry TX]
     Events[Contract Events]
   end
-  subgraph App[Next.js App]
+  subgraph App
     Svc[YellowNetworkService]
     UI[Games]
   end
